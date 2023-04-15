@@ -1,14 +1,19 @@
 import discord
 from discord.ext import commands
 import time
-
-TOKEN="Your token"
+import asyncio
+from discord.ext.commands import has_permissions, CheckFailure
+admins_role_id=0#your admin role id
+id_serwa=0#your guild id
+TOKEN=""
 intents=discord.Intents.all()
 discord.member = True
 intents.message_content = True
-bot = commands.Bot(command_prefix="$", intents=intents, case_insensitive=True)
+bot = discord.Client( intents=intents, case_insensitive=True)
+tree = discord.app_commands.CommandTree(bot)
 @bot.event
 async def on_ready():
+    await tree.sync(guild=discord.Object(id=id_serwa))
     print("I'm ready!")
 @bot.event
 async def on_member_join(member):
@@ -20,4 +25,20 @@ async def on_member_join(member):
 async def on_message(message):
     if message.content.lower() == "siema":
         await message.channel.send("No siema byczku :)", reference=message)
+
+
+@tree.command(name = "clear", description = "Usuń użytkownika z serwera :)", guild=discord.Object(id=id_serwa)) 
+@discord.app_commands.checks.has_role(admins_role_id)
+async def clear(interaction: discord.Interaction, amount: int):
+    await interaction.response.defer()
+    channel = interaction.channel
+    await channel.purge(limit=amount+1)
+    await interaction.channel.send(f"Usunięto {amount} wiadomości, pani/panie {interaction.user}")
+
+@clear.error
+async def error_clear(interaction, x):
+    await interaction.response.defer()
+    channel = interaction.channel
+    await channel.purge(limit=1)
+    await interaction.channel.send(f"(/clear) Brak uprawnień, {interaction.user}")
 bot.run(TOKEN)
