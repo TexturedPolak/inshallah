@@ -3,8 +3,8 @@ from discord.ext import commands
 import time
 import asyncio
 from discord.ext.commands import has_permissions, CheckFailure
-admins_role_id=0#your admin role id
-id_serwa=0#your guild id
+admins_role_id=0
+id_serwa=0
 TOKEN=""
 intents=discord.Intents.all()
 discord.member = True
@@ -19,15 +19,16 @@ async def on_ready():
 async def on_member_join(member):
     print(member.created_at.timestamp(), time.time())
     if time.time() - member.created_at.timestamp() < 7_890_000 : #3 miesiące w sekundach
+        await member.send("Twoje konto zostało uznane za skrajnie podejrzane. Spróbuj ponownie kiedy indziej :)")
         await member.kick(reason="Fresh account")
-        print("git")
+
 @bot.event
 async def on_message(message):
     if message.content.lower() == "siema":
-        await message.channel.send("No siema byczku :)", reference=message)
+        await message.channel.send("No siema :)", reference=message)
 
 
-@tree.command(name = "clear", description = "Usuń użytkownika z serwera :)", guild=discord.Object(id=id_serwa)) 
+@tree.command(name = "clear", description = "Usuń dowolną liczbę wiadomości (uważaj bo nie ma hamulców)", guild=discord.Object(id=id_serwa)) 
 @discord.app_commands.checks.has_role(admins_role_id)
 async def clear(interaction: discord.Interaction, amount: int):
     await interaction.response.defer()
