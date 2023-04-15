@@ -3,8 +3,8 @@ from discord.ext import commands
 import time
 import asyncio
 from discord.ext.commands import has_permissions, CheckFailure
-admins_role_id=0
-id_serwa=0
+admins_role_id=0 #admin_role_id
+id_serwa=0 #server_id
 TOKEN=""
 intents=discord.Intents.all()
 discord.member = True
