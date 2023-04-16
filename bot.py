@@ -82,8 +82,8 @@ async def on_message(message):
     try:
         for i in badwords:
             if i in message.content.lower():
-                await message.channel.send(f"{message.author} nie ładnie tak brzydko mówić (+3 punkty karne) :(")
                 await message.delete()
+                await message.channel.send(f"{message.author} nie ładnie tak brzydko mówić (+3 punkty karne) :(")
                 czy_isnieje=False
                 for i in database:
                     if i.get("name")==message.author.id:
