@@ -20,24 +20,24 @@ async def resetPoints():
                 i["points"]-=1
         save()
         await asyncio.sleep(10800)
-async def check(message):
+async def check(member):
     for i in database:
-        if i.get("name")==message.author.id:
+        if i.get("name")==member.id:
             if i.get("points")>=15 and i.get("warnings")==None:
-                await message.author.send("Przekroczono limit punktów karnych (1 ostrzeżenie)")
-                await message.author.kick(reason="Punkty karne (1)")
+                await member.send("Przekroczono limit punktów karnych (1 ostrzeżenie)")
+                await member.kick(reason="Punkty karne (1)")
                 i["points"]=0
                 i["warnings"]=1
                 save()
             if i.get("points")>=15 and i.get("warnings")>=1:
                 i["warnings"]+=1
                 if i.get("warnings")<=3:
-                    await message.author.send("Przekroczono limit punktów karnych ("+str(i.get("warnings"))+" ostrzeżenie)")
-                    await message.author.kick(reason="Punkty karne ("+str(i.get("warnings"))+" ostrzeżeń)")
+                    await member.send("Przekroczono limit punktów karnych ("+str(i.get("warnings"))+" ostrzeżenie)")
+                    await member.kick(reason="Punkty karne ("+str(i.get("warnings"))+" ostrzeżeń)")
                     i["points"]=0
                 elif i.get("warnings")>=4:
-                    await message.author.send("Przekroczono limit punktów karnych przez co otrzymałeś bana. Skontaktuj się z administracją (RooiGevaar19#) aby zyskać możliwego unbana.")
-                    await message.author.ban(reason="Punkty karne (x>=4 ostrzeżeń)")
+                    await member.send("Przekroczono limit punktów karnych przez co otrzymałeś bana. Skontaktuj się z administracją (RooiGevaar19#) aby zyskać możliwego unbana.")
+                    await member.ban(reason="Punkty karne (x>=4 ostrzeżeń)")
                     i["points"]=0
                     i["warnings"]=0
                 save()
@@ -83,7 +83,16 @@ async def on_member_update(before, after):
     for i in badwords:
         if i in after.nick.lower():
             await after.edit(nick=before.nick)
-            await after.send("Twój nick jest zbyt wulgarny. Został automatycznie zresetowany. Nie zmieniaj go ponownie na taki :)")      
+            await after.send("Twój nick jest zbyt wulgarny. Został automatycznie zresetowany. Nie zmieniaj go ponownie na taki (+ 5 punktów karnych)")
+            czy_isnieje=False
+            for i in database:
+                if i.get("name")==after.id:
+                    i["points"]+=3
+                    czy_isnieje=True
+            if czy_isnieje==False:
+                database.append({"name":after.id,"points":3})
+            save()
+            await check(after)      
 @bot.event
 async def on_message(message):
     if message.content.lower() == "siema":
@@ -101,7 +110,7 @@ async def on_message(message):
                 if czy_isnieje==False:
                     database.append({"name":message.author.id,"points":3})
                 save()
-                await check(message)                
+                await check(message.author)                
     except:
         pass
 @tree.command(name = "clear", description = "Usuń dowolną liczbę wiadomości (uważaj bo nie ma hamulców)", guild=discord.Object(id=id_serwa)) 
