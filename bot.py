@@ -14,12 +14,21 @@ intents.message_content = True
 bot = discord.Client( intents=intents, case_insensitive=True)
 tree = discord.app_commands.CommandTree(bot)
 async def resetPoints():
+    plik = open("time.json","r")
+    time = int(plik.read())
+    plik.close()
     while True:
-        for i in database:
-            if i.get("points")>0:
-                i["points"]-=1
+        time-=1
         save()
-        await asyncio.sleep(10800)
+        await asyncio.sleep(1)
+        if time <=0:
+            for i in database:
+                if i.get("points")>0:
+                    i["points"]-=1
+            time=10800
+        plik = open("time.json","w+")
+        plik.write(str(time))
+        plik.close()
 async def check(member):
     for i in database:
         if i.get("name")==member.id:
@@ -67,8 +76,8 @@ def save():
 @bot.event
 async def on_ready():
     await tree.sync(guild=discord.Object(id=id_serwa))
-    await resetPoints()
     print("I'm ready!")
+    await resetPoints()
 @bot.event
 async def on_member_join(member):
     if time.time() - member.created_at.timestamp() < 7_890_000 : #3 miesiące w sekundach
@@ -101,7 +110,7 @@ async def on_message(message):
         for i in badwords:
             if i in message.content.lower():
                 await message.delete()
-                await message.channel.send(f"{message.author} nie ładnie tak brzydko mówić (+3 punkty karne) :(")
+                await message.channel.send(f"{message.author.mention} nie ładnie tak brzydko mówić (+3 punkty karne) :(")
                 czy_isnieje=False
                 for i in database:
                     if i.get("name")==message.author.id:
@@ -119,16 +128,18 @@ async def clear(interaction: discord.Interaction, amount: int):
     await interaction.response.defer()
     channel = interaction.channel
     await channel.purge(limit=amount+1)
-    await interaction.channel.send(f"Usunięto {amount} wiadomości, pani/panie {interaction.user}")
+    await interaction.channel.send(f"Usunięto {amount} wiadomości, pani/panie {interaction.user.mention}")
 @clear.error
 async def error_clear(interaction, x):
     await interaction.response.defer()
     channel = interaction.channel
     await channel.purge(limit=1)
-    await interaction.channel.send(f"(/clear) Brak uprawnień, {interaction.user}")
+    await interaction.channel.send(f"(/clear) Brak uprawnień, {interaction.user.mention}")
 @tree.command(name = "kartoteka", description = "Sprawdź swoją kartotekę", guild=discord.Object(id=id_serwa)) 
 async def kartoteka(interaction: discord.Interaction):
     await interaction.response.defer()
+    await interaction.channel.purge(limit=1)
+    wykrocz=False
     for i in database:
         if i.get("name")==interaction.user.id:
             if i.get("warnings")==None:
@@ -136,22 +147,26 @@ async def kartoteka(interaction: discord.Interaction):
             else:
                 warnings=i.get("warnings")
             await interaction.channel.send(f"{interaction.user.mention} posiadasz "+str(i.get("points"))+f" punktów karnych oraz {warnings} ostrzeżeń na koncie.")
+            wykrocz=True
+    if wykrocz==False:
+        await interaction.channel.send(f"{interaction.user.mention}, nie posiadasz żadnych wykroczeń i nie byłeś nigdy notowany.")
 @tree.command(name = "księga-wykroczeń", description = "Sprawdź czyjąś bibliotekę", guild=discord.Object(id=id_serwa)) 
 @discord.app_commands.checks.has_role(admins_role_id)
 async def ksiega(interaction: discord.Interaction, uzytkownik: discord.Member):
-    await interaction.response.defer()
+    wykrocz=False
     for i in database:
         if i.get("name")==uzytkownik.id:
             if i.get("warnings")==None:
                 warnings=0
             else:
                 warnings=i.get("warnings")
-            await interaction.channel.send(f"{uzytkownik.mention} ma "+str(i.get("points"))+f" punktów karnych oraz {warnings} ostrzeżeń na koncie.")
+            await interaction.response.send_message(f"{uzytkownik.mention} ma "+str(i.get("points"))+f" punktów karnych oraz {warnings} ostrzeżeń na koncie.")
+            wykrocz=True
+    if wykrocz==False:
+        await interaction.response.send_message(f"{uzytkownik.mention}, nie posiada żadnych wykroczeń i nie był nigdy notowany.")
 @ksiega.error
 async def error_ksiega(interaction, x):
-    await interaction.response.defer()
     channel = interaction.channel
-    await channel.purge(limit=1)
-    await interaction.channel.send(f"(/clear) Brak uprawnień, {interaction.user}")
+    await interaction.response.send_message(f"(/księga-wykroczeń) Brak uprawnień, {interaction.user.mention}")
 load()
 bot.run(TOKEN)
