@@ -45,7 +45,7 @@ async def check(member):
                     await member.kick(reason="Punkty karne ("+str(i.get("warnings"))+" ostrzeżeń)")
                     i["points"]=0
                 elif i.get("warnings")>=4:
-                    await member.send("Przekroczono limit punktów karnych przez co otrzymałeś bana. Skontaktuj się z administracją (RooiGevaar19#) aby zyskać możliwego unbana.")
+                    await member.send("Przekroczono limit punktów karnych przez co otrzymałeś bana. Skontaktuj się z administracją (RooiGevaar19#9997) aby zyskać możliwego unbana.")
                     await member.ban(reason="Punkty karne (x>=4 ostrzeżeń)")
                     i["points"]=0
                     i["warnings"]=0
@@ -106,9 +106,13 @@ async def on_member_update(before, after):
 async def on_message(message):
     if message.content.lower() == "siema":
         await message.channel.send("No siema :)", reference=message)
-    try:
-        for i in badwords:
-            if i in message.content.lower():
+    word=""
+    dlugosc = message.content
+    dlugoscZbadana = 0
+    for i in message.content:
+        if i in [" ","!","#","%","^","*","(",")","-","+","_","=","~","`","[","]","{","}",";",":","'",'"',"|",'\\',",","<",".",">","/","?"]:
+            dlugoscZbadana+=1
+            if word in badwords: 
                 await message.delete()
                 await message.channel.send(f"{message.author.mention} nie ładnie tak brzydko mówić (+3 punkty karne) :(")
                 czy_isnieje=False
@@ -119,9 +123,32 @@ async def on_message(message):
                 if czy_isnieje==False:
                     database.append({"name":message.author.id,"points":3})
                 save()
-                await check(message.author)                
-    except:
-        pass
+                await check(message.author)
+            word=""
+        else:
+            if i == "@":
+                word+="a"
+            elif i=="$":
+                word+="s"
+            elif i=="&":
+                word+="i"
+            else:
+                word+= i.lower()
+            dlugoscZbadana+=1
+        if dlugoscZbadana>=len(message.content):
+            if word in badwords: 
+                await message.delete()
+                await message.channel.send(f"{message.author.mention} nie ładnie tak brzydko mówić (+3 punkty karne) :(")
+                czy_isnieje=False
+                for i in database:
+                    if i.get("name")==message.author.id:
+                        i["points"]+=3
+                        czy_isnieje=True
+                if czy_isnieje==False:
+                    database.append({"name":message.author.id,"points":3})
+                save()
+                await check(message.author)
+            word=""
 @tree.command(name = "clear", description = "Usuń dowolną liczbę wiadomości (uważaj bo nie ma hamulców)", guild=discord.Object(id=id_serwa)) 
 @discord.app_commands.checks.has_role(admins_role_id)
 async def clear(interaction: discord.Interaction, amount: int):
