@@ -137,6 +137,14 @@ async def on_member_update(before, after):
             save()
             await check(after)
 @bot.event
+async def on_member_leave(member):
+    for user in databaseClock:
+        try:
+            if user.get("userId") == member.id:
+                databaseClock.remove({"userId":user.get("userId"),"timeToKick":user.get("timeToKick")})
+        except:
+            pass
+@bot.event
 async def on_member_ban(guild, member):
     plik = open("bans.json","r")
     bans = json.loads(plik.read())
