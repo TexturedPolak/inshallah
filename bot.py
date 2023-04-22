@@ -157,6 +157,12 @@ async def on_member_ban(guild, member):
     plik = open("bans.json","w+")
     plik.write(json.dumps(bans))
     plik.close()
+    for user in databaseClock:
+        try:
+            if user.get("userId") == member.id:
+                databaseClock.remove({"userId":user.get("userId"),"timeToKick":user.get("timeToKick")})
+        except:
+            pass
 @bot.event
 async def on_message(message):
     for i in databaseClock:
