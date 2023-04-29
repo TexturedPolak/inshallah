@@ -14,7 +14,7 @@ DAYS = 86_400      # 1 day in seconds
 
 # ==============================================================================================
 # bot parametres
-
+LogsChannelId = 0 
 AdminRoleID=0
 ServerID=0
 TOKEN=""
@@ -39,6 +39,7 @@ intents=discord.Intents.all()
 discord.member = True
 intents.message_content = True
 bot = discord.Client( intents=intents, case_insensitive=True)
+LogsChannel = bot.get_channel(LogsChannelId)
 tree = discord.app_commands.CommandTree(bot)
 plik = open("databaseClock.json","r")
 databaseClock = json.loads(plik.read())
@@ -46,6 +47,7 @@ plik.close()
 plik = open("database.json","r")
 database = json.loads(plik.read())
 plik.close()
+
 
 async def check(member):
     for i in database:
@@ -133,7 +135,69 @@ def save():
     plik = open("database.json","w+")
     plik.write(json.dumps(database))
     plik.close()
-
+def addPoints(member, BadPoints):
+    czy_isnieje=False
+    for i in database:
+        if i.get("name")==member.id:
+            i["points"]+=BadPoints
+            czy_isnieje=True
+    if czy_isnieje==False:
+        database.append({"name":after.id,"points":BadPoints})
+    save()
+async def checkMessage(message):
+    word=""
+    dlugosc = message.content
+    dlugoscZbadana = 0
+    for i in message.content:
+        if i in [" ","!","#","%","^","*","(",")","-","+","_","=","~","`","[","]","{","}",";",":","'",'"',"|",'\\',",","<",".",">","/","?"]:
+            dlugoscZbadana+=1
+            if word in badwords: 
+                await message.delete()
+                await message.channel.send(f"{message.author.mention}, nieładnie tak brzydko mówić (+{Points_BadWords} punkty karne) :(")
+                addPoints(message.author, Points_BadWords)
+                await check(message.author)
+               	for i in database:
+                    if i.get("name")==message.author.id:
+                        if i.get("warnings")==None:
+                            warnings=0
+                        else:
+                            warnings=i.get("warnings")
+                        embed = discord.Embed(
+                        colour=discord.Colour.red(),
+                        title=f"Twoja kartoteka obecnie:")
+                        embed.add_field(name="Punkty:", value=str(i.get('points')))
+                        embed.add_field(name="Ostrzeżenia:", value=str(warnings))
+                        await message.channel.send(embed=embed)
+            word=""
+        else:
+            if i == "@":
+                word+="a"
+            elif i=="$":
+                word+="s"
+            elif i=="&":
+                word+="i"
+            else:
+                word+= i.lower()
+            dlugoscZbadana+=1
+        if dlugoscZbadana>=len(message.content):
+            if word in badwords: 
+                await message.delete()
+                await message.channel.send(f"{message.author.mention}, nieładnie tak brzydko mówić (+{Points_BadWords} punkty karne) :(")
+                addPoints(message.author, Points_BadWords)
+                word=""
+                await check(message.author)
+               	for i in database:
+                    if i.get("name")==message.author.id:
+                        if i.get("warnings")==None:
+                            warnings=0
+                        else:
+                            warnings=i.get("warnings")
+                        embed = discord.Embed(
+                        colour=discord.Colour.red(),
+                        title=f"Twoja kartoteka obecnie:")
+                        embed.add_field(name="Punkty:", value=str(i.get('points')))
+                        embed.add_field(name="Ostrzeżenia:", value=str(warnings))
+                        await message.channel.send(embed=embed)
 @bot.event
 async def on_ready():
     await tree.sync(guild=discord.Object(id=ServerID))
@@ -206,144 +270,11 @@ async def on_message(message):
                 i["timeToKick"] = Account_IdleTime
     if message.content.lower() == "siema":
         await message.channel.send("No siema :)", reference=message)
-    word=""
-    dlugosc = message.content
-    dlugoscZbadana = 0
-    for i in message.content:
-        if i in [" ","!","#","%","^","*","(",")","-","+","_","=","~","`","[","]","{","}",";",":","'",'"',"|",'\\',",","<",".",">","/","?"]:
-            dlugoscZbadana+=1
-            if word in badwords: 
-                await message.delete()
-                await message.channel.send(f"{message.author.mention}, nieładnie tak brzydko mówić (+{Points_BadWords} punkty karne) :(")
-                czy_isnieje=False
-                for i in database:
-                    if i.get("name")==message.author.id:
-                        i["points"]+=Points_BadWords
-                        czy_isnieje=True
-                if czy_isnieje==False:
-                    database.append({"name":message.author.id,"points":Points_BadWords})
-                save()
-                await check(message.author)
-               	for i in database:
-                    if i.get("name")==message.author.id:
-                        if i.get("warnings")==None:
-                            warnings=0
-                        else:
-                            warnings=i.get("warnings")
-                        embed = discord.Embed(
-                        colour=discord.Colour.red(),
-                        title=f"Twoja kartoteka obecnie:")
-                        embed.add_field(name="Punkty:", value=str(i.get('points')))
-                        embed.add_field(name="Ostrzeżenia:", value=str(warnings))
-                        await message.channel.send(embed=embed)
-            word=""
-        else:
-            if i == "@":
-                word+="a"
-            elif i=="$":
-                word+="s"
-            elif i=="&":
-                word+="i"
-            else:
-                word+= i.lower()
-            dlugoscZbadana+=1
-        if dlugoscZbadana>=len(message.content):
-            if word in badwords: 
-                await message.delete()
-                await message.channel.send(f"{message.author.mention}, nieładnie tak brzydko mówić (+{Points_BadWords} punkty karne) :(")
-                czy_isnieje=False
-                for i in database:
-                    if i.get("name")==message.author.id:
-                        i["points"]+=Points_BadWords
-                        czy_isnieje=True
-                if czy_isnieje==False:
-                    database.append({"name":message.author.id,"points":Points_BadWords})
-                word=""
-                save()
-                await check(message.author)
-               	for i in database:
-                    if i.get("name")==message.author.id:
-                        if i.get("warnings")==None:
-                            warnings=0
-                        else:
-                            warnings=i.get("warnings")
-                        embed = discord.Embed(
-                        colour=discord.Colour.red(),
-                        title=f"Twoja kartoteka obecnie:")
-                        embed.add_field(name="Punkty:", value=str(i.get('points')))
-                        embed.add_field(name="Ostrzeżenia:", value=str(warnings))
-                        await message.channel.send(embed=embed)
+    await checkMessage(message)
 		    
 @bot.event
 async def on_message_edit(before, after):
-    word=""
-    dlugosc = after.content
-    dlugoscZbadana = 0
-    for i in after.content:
-        if i in [" ","!","#","%","^","*","(",")","-","+","_","=","~","`","[","]","{","}",";",":","'",'"',"|",'\\',",","<",".",">","/","?"]:
-            dlugoscZbadana+=1
-            if word in badwords: 
-                await after.delete()
-                await after.channel.send(f"{after.author.mention}, nieładnie tak brzydko mówić (+{Points_BadWords} punkty karne) :(")
-                czy_isnieje=False
-                for i in database:
-                    if i.get("name")==after.author.id:
-                        i["points"]+=Points_BadWords
-                        czy_isnieje=True
-                if czy_isnieje==False:
-                    database.append({"name":after.author.id,"points":Points_BadWords})
-                
-                save()
-                await check(after.author)
-                for i in database:
-                    if i.get("name")==after.author.id:
-                        if i.get("warnings")==None:
-                            warnings=0
-                        else:
-                            warnings=i.get("warnings")
-                        embed = discord.Embed(
-                        colour=discord.Colour.red(),
-                        title=f"Twoja kartoteka obecnie:")
-                        embed.add_field(name="Punkty:", value=str(i.get('points')))
-                        embed.add_field(name="Ostrzeżenia:", value=str(warnings))
-                        await after.channel.send(embed=embed)
-            word=""
-        else:
-            if i == "@":
-                word+="a"
-            elif i=="$":
-                word+="s"
-            elif i=="&":
-                word+="i"
-            else:
-                word+= i.lower()
-            dlugoscZbadana+=1
-        if dlugoscZbadana>=len(after.content):
-            if word in badwords: 
-                await after.delete()
-                await after.channel.send(f"{after.author.mention}, nieładnie tak brzydko mówić (+{Points_BadWords} punkty karne) :(")
-                czy_isnieje=False
-                for i in database:
-                    if i.get("name")==after.author.id:
-                        i["points"]+=Points_BadWords
-                        czy_isnieje=True
-                if czy_isnieje==False:
-                    database.append({"name":after.author.id,"points":Points_BadWords})
-                save()
-                await check(after.author)
-                word=""
-                for i in database:
-                    if i.get("name")==after.author.id:
-                        if i.get("warnings")==None:
-                            warnings=0
-                        else:
-                            warnings=i.get("warnings")
-                        embed = discord.Embed(
-                        colour=discord.Colour.red(),
-                        title=f"Twoja kartoteka obecnie:")
-                        embed.add_field(name="Punkty:", value=str(i.get('points')))
-                        embed.add_field(name="Ostrzeżenia:", value=str(warnings))
-                        await after.channel.send(embed=embed)
+    await checkMessage(message)
 
 @tree.command(name = "clear", description = "Usuń dowolną liczbę wiadomości (uważaj, bo nie ma hamulców)", guild=discord.Object(id=ServerID)) 
 @discord.app_commands.checks.has_role(AdminRoleID)
@@ -403,5 +334,25 @@ async def error_ksiega(interaction, x):
     channel = interaction.channel
     await interaction.response.send_message(f"(/księga-wykroczeń) Brak uprawnień, {interaction.user.mention}")
 
+
+@tree.command(name = "ukaraj", description = "Ukaraj kogoś paroma punktami", guild=discord.Object(id=ServerID)) 
+@discord.app_commands.checks.has_role(AdminRoleID)
+async def ukaraj(interaction: discord.Interaction, uzytkownik: discord.Member, ilosc: int, powod: str):
+    for i in database:
+        if i.get("name") == uzytkownik.id:
+            addPoints(uzytkownik, ilosc)
+            await check(uzytkownik)
+            embed = discord.Embed(colour=discord.Colour.red(),title=f"Zostałeś ukarany {uzytkownik}!")
+            embed.add_field(name="Powód:", value=powod)
+            embed.add_field(name="Ilość punktów", value=str(ilosc))
+            await interaction.channel.send(embed=embed)
+            await LogsChannel.send(embed=embed)
+            embed = discord.Embed(colour=discord.Colour.red(),title=f"Twoja kartoteka obecnie:")
+            embed.add_field(name="Punkty:", value=str(i.get('points')))
+            embed.add_field(name="Ostrzeżenia:", value=str(warnings))
+            await interaction.channel.send(embed=embed)
+@ukaraj.error
+async def error_ukaraj(interaction, x):
+    await interaction.response.send_message(f"(/ukaraj) Brak uprawnień, {interaction.user.mention}")
 load()
 bot.run(TOKEN)
