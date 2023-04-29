@@ -15,6 +15,8 @@ DAYS = 86_400      # 1 day in seconds
 # ==============================================================================================
 # bot parametres
 LogsChannelId = 0 
+BanLogsChannelId = 0
+KickLogsChannelId = 0
 AdminRoleID=0
 ServerID=0
 TOKEN=""
@@ -40,6 +42,8 @@ discord.member = True
 intents.message_content = True
 bot = discord.Client( intents=intents, case_insensitive=True)
 LogsChannel = bot.get_channel(LogsChannelId)
+BanLogsChannel = bot.get_channel(BanLogsChannelId)
+KickLogsChannel = bot.get_channel(KickLogsChannelId)
 tree = discord.app_commands.CommandTree(bot)
 plik = open("databaseClock.json","r")
 databaseClock = json.loads(plik.read())
@@ -335,24 +339,62 @@ async def error_ksiega(interaction, x):
     await interaction.response.send_message(f"(/księga-wykroczeń) Brak uprawnień, {interaction.user.mention}")
 
 
-@tree.command(name = "ukaraj", description = "Ukaraj kogoś paroma punktami", guild=discord.Object(id=ServerID)) 
+@tree.command(name = "mandat", description = "Ukaraj kogoś paroma punktami", guild=discord.Object(id=ServerID)) 
 @discord.app_commands.checks.has_role(AdminRoleID)
-async def ukaraj(interaction: discord.Interaction, uzytkownik: discord.Member, ilosc: int, powod: str):
+async def mandat(interaction: discord.Interaction, uzytkownik: discord.Member, ilosc: int, powod: str):
+    addPoints(uzytkownik, ilosc)
+    await check(uzytkownik)
+    embed = discord.Embed(colour=discord.Colour.red(),title=f"Zostałeś ukarany {uzytkownik}!")
+    embed.add_field(name="Powód:", value=powod)
+    embed.add_field(name="Ilość punktów", value=str(ilosc))
+    await interaction.response.send_message(embed=embed)
+    await LogsChannel.send(embed=embed)
+    embed = discord.Embed(colour=discord.Colour.red(),title=f"Twoja kartoteka obecnie:")
+    embed.add_field(name="Punkty:", value=str(i.get('points')))
+    embed.add_field(name="Ostrzeżenia:", value=str(warnings))
+    await interaction.channel.send(embed=embed)
+@mandat.error
+async def error_mandat(interaction, x):
+    await interaction.response.send_message(f"(/mandat) Brak uprawnień, {interaction.user.mention}")
+@tree.command(name = "daruj-kare", description = "Usun parę punktów z czyjegoś konta", guild=discord.Object(id=ServerID)) 
+@discord.app_commands.checks.has_role(AdminRoleID)
+async def darujKare(interaction: discord.Interaction, uzytkownik: discord.Member, ilosc: int):
     for i in database:
-        if i.get("name") == uzytkownik.id:
-            addPoints(uzytkownik, ilosc)
+        if uzytkownik == i.get("name"):
+            if i.get("points") <= ilosc:
+                i["points"]=0
+            else:
+                i["points"]-=ilosc
+            save()
             await check(uzytkownik)
-            embed = discord.Embed(colour=discord.Colour.red(),title=f"Zostałeś ukarany {uzytkownik}!")
-            embed.add_field(name="Powód:", value=powod)
-            embed.add_field(name="Ilość punktów", value=str(ilosc))
-            await interaction.channel.send(embed=embed)
-            await LogsChannel.send(embed=embed)
-            embed = discord.Embed(colour=discord.Colour.red(),title=f"Twoja kartoteka obecnie:")
-            embed.add_field(name="Punkty:", value=str(i.get('points')))
-            embed.add_field(name="Ostrzeżenia:", value=str(warnings))
-            await interaction.channel.send(embed=embed)
-@ukaraj.error
-async def error_ukaraj(interaction, x):
-    await interaction.response.send_message(f"(/ukaraj) Brak uprawnień, {interaction.user.mention}")
+            await interaction.response.send_message(f"{interaction.user.mention},odjęto punkty użytkownikowi {uzytkownik.mention}. Liczba odjętych punktów: {ilosc}.")
+            await LogsChannel.send(f"{interaction.user.mention},odjęto punkty użytkownikowi {uzytkownik.mention}. Liczba odjętych punktów: {ilosc}.")
+        else:
+            await interaction.response.send_message("Brak użytkownika w bazie danych.")
+
+@tree.command(name = "pal-gume", description = "Do kickowania użytkowników", guild=discord.Object(id=ServerID)) 
+@discord.app_commands.checks.has_role(AdminRoleID)
+async def palGume(interaction: discord.Interaction, uzytkownik: discord.Member, powod: str):
+    await uzytkownik.kick(reason=powod)
+    await uzytkownik.send(f"Zostałeś wyrzucony z powodu: {powod} przez {interaction.user.mention}")
+    embed = discord.Embed(colour=discord.Colour.red(),title=f"{uzytkownik} został wyrzucony przez {interaction.user}")
+    embed.add_field(name="Powód:", value=powod)
+    await interaction.response.send_message(embed=embed)
+    await KickLogsChannelId.send(embed=embed)
+@palGume.error
+async def error_palGume(interaction, x):
+    await interaction.response.send_message(f"(/pal-gume) Brak uprawnień, {interaction.user.mention}")
+@tree.command(name = "won", description = "Do banowania użytkowników", guild=discord.Object(id=ServerID)) 
+@discord.app_commands.checks.has_role(AdminRoleID)
+async def won(interaction: discord.Interaction, uzytkownik: discord.Member, powod: str):
+    await uzytkownik.ban(reason=powod)
+    await uzytkownik.send(f"Zostałeś zbanowany z powodu: {powod} przez {interaction.user.mention}")
+    embed = discord.Embed(colour=discord.Colour.red(),title=f"{uzytkownik} został zbanowany przez {interaction.user}")
+    embed.add_field(name="Powód:", value=powod)
+    await interaction.response.send_message(embed=embed)
+    await BanLogsChannel.send(embed=embed)
+@won.error
+async def error_won(interaction, x):
+    await interaction.response.send_message(f"(/won) Brak uprawnień, {interaction.user.mention}")
 load()
 bot.run(TOKEN)
