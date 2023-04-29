@@ -7,4 +7,5 @@ Options:
 <li>kick or ban members for too many badwords</li>
 <br>
 don't forget change server_id, admin_role_id, and token <br>
+create database.json, databaseClock.json with empty list and time.json with int (seconds) <br>
 
