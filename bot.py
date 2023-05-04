@@ -72,6 +72,11 @@ async def check(member):
                 elif i.get("warnings") >= MaxWarnings+1:
                     await member.send(f"Przekroczono limit punktów karnych przez co otrzymałeś bana. Skontaktuj się z administracją, aby zyskać możliwego unbana.")
                     await member.ban(reason=f"Punkty karne (powyżej {MaxWarnings} ostrzeżeń)")
+                    embed = discord.Embed(colour=discord.Colour.red(),title=f"{member} został zbanowany przez Bota")
+                    embed.add_field(name="Powód:", value="Punkty Karne")
+                    embed.add_field(name="ID:", value=member.id)
+                    BanLogsChannel = bot.get_channel(BanLogsChannelId)
+                    await BanLogsChannel.send(embed=embed)
                     i["points"]=0
                     i["warnings"]=0
                 save()
@@ -248,6 +253,22 @@ async def on_member_leave(member):
             pass
 
 @bot.event
+async def on_member_remove(member):
+    guild = member.guild
+    async for entry in guild.audit_logs(limit=1, action=discord.AuditLogAction.kick):
+        if entry.target == member:
+            embed = discord.Embed(colour=discord.Colour.red(),title=f"{member} został wyrzucony przez {entry.user}")
+            embed.add_field(name="Powód:", value=entry.reason)
+            embed.add_field(name="ID:", value=member.id)
+            KickLogsChannel = bot.get_channel(KickLogsChannelId)
+            await KickLogsChannel.send(embed=embed)
+    for user in databaseClock:
+        try:
+            if user.get("userId") == member.id:
+                databaseClock.remove({"userId":user.get("userId"),"timeToKick":user.get("timeToKick")})
+        except:
+            pass
+@bot.event
 async def on_member_ban(guild, member):
     plik = open("bans.json","r")
     bans = json.loads(plik.read())
@@ -266,7 +287,20 @@ async def on_member_ban(guild, member):
                 databaseClock.remove({"userId":user.get("userId"),"timeToKick":user.get("timeToKick")})
         except:
             pass
-
+    guild = member.guild
+    async for entry in guild.audit_logs(limit=1, action=discord.AuditLogAction.ban):
+        if entry.target == member:
+            embed = discord.Embed(colour=discord.Colour.red(),title=f"{member} został zbanowany przez {entry.user}")
+            embed.add_field(name="Powód:", value=entry.reason)
+            embed.add_field(name="ID:", value=member.id)
+            BanLogsChannel = bot.get_channel(BanLogsChannelId)
+            await BanLogsChannel.send(embed=embed)
+    for user in databaseClock:
+        try:
+            if user.get("userId") == member.id:
+                databaseClock.remove({"userId":user.get("userId"),"timeToKick":user.get("timeToKick")})
+        except:
+            pass
 @bot.event
 async def on_message(message):
     for i in databaseClock:
@@ -278,7 +312,7 @@ async def on_message(message):
 		    
 @bot.event
 async def on_message_edit(before, after):
-    await checkMessage(message)
+    await checkMessage(after)
 
 @tree.command(name = "clear", description = "Usuń dowolną liczbę wiadomości (uważaj, bo nie ma hamulców)", guild=discord.Object(id=ServerID)) 
 @discord.app_commands.checks.has_role(AdminRoleID)
@@ -387,13 +421,14 @@ async def error_darujKare(interaction, x):
 @tree.command(name = "pal-gume", description = "Do kickowania użytkowników", guild=discord.Object(id=ServerID)) 
 @discord.app_commands.checks.has_role(AdminRoleID)
 async def palGume(interaction: discord.Interaction, uzytkownik: discord.Member, powod: str):
-    await uzytkownik.send(f'Zostałeś wyrzucony z powodu: "{powod}" przez {interaction.user}')
+    await uzytkownik.send(f'Zostałeś wyrzucony z powodu: "{powod}" przez {interaction.user.mention}')
     await uzytkownik.kick(reason=powod)
-    embed = discord.Embed(colour=discord.Colour.red(),title=f"{uzytkownik} został wyrzucony przez {interaction.user}")
+    embed = discord.Embed(colour=discord.Colour.yellow(),title=f"{uzytkownik} został wyrzucony przez {interaction.user}")
     embed.add_field(name="Powód:", value=powod)
     embed.add_field(name="ID:", value=uzytkownik.id)
+    embed2 = discord.Embed(colour=discord.Colour.red(),title=f"{interaction.user} użył komendy /pal-gume")
     KickLogsChannel = bot.get_channel(KickLogsChannelId)
-    await KickLogsChannel.send(embed=embed)
+    await KickLogsChannel.send(embed=embed2)
     await interaction.response.send_message(embed=embed)
 @palGume.error
 async def error_palGume(interaction, x):
@@ -401,14 +436,15 @@ async def error_palGume(interaction, x):
 @tree.command(name = "won", description = "Do banowania użytkowników", guild=discord.Object(id=ServerID)) 
 @discord.app_commands.checks.has_role(AdminRoleID)
 async def won(interaction: discord.Interaction, uzytkownik: discord.Member, powod: str):
-    await uzytkownik.send(f'Zostałeś zbanowany z powodu: "{powod}" przez {interaction.user}')
     await uzytkownik.ban(reason=powod)
     embed = discord.Embed(colour=discord.Colour.red(),title=f"{uzytkownik} został zbanowany przez {interaction.user}")
     embed.add_field(name="Powód:", value=powod)
     embed.add_field(name="ID:", value=uzytkownik.id)
     BanLogsChannel = bot.get_channel(BanLogsChannelId)
-    await BanLogsChannel.send(embed=embed)
+    embed2 = discord.Embed(colour=discord.Colour.yellow(),title=f"{interaction.user} użył komendy /won")
+    await BanLogsChannel.send(embed=embed2)
     await interaction.response.send_message(embed=embed)
+
 @won.error
 async def error_won(interaction, x):
     await interaction.response.send_message(f"(/won) Brak uprawnień, {interaction.user.mention}")
