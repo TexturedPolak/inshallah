@@ -5,6 +5,7 @@ import time
 import asyncio
 from discord.ext.commands import has_permissions, CheckFailure
 import datetime
+import requests
 
 # ==============================================================================================
 # useful constants
@@ -20,6 +21,10 @@ try:
     file.close()
 except:
     print("Your config.json is broken, repair this and restart.")
+    print("Trying to recover. Please restart.")
+    URL="https://raw.githubusercontent.com/TexturedPolak/inshallah/main/sampleConfig.json"
+    response = requests.get(URL)
+    open("config.json", "wb").write(response.content)
     exit()
 TOKEN = config.get("TOKEN")
 LogsChannelId = config.get("LogsChannelId")
@@ -37,7 +42,7 @@ Account_YoungTime = config.get("Account_YoungDaysTime") * DAYS # amount of time 
 badwords= config.get("badwords")
 def checkFiles():
     emplyList = []
-    time = Account_IdleTime
+    time = PointsCooldownTime
     print("Checking files...")
     try:
         file = open("database.json","x")
