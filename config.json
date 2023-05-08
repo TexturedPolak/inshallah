@@ -1,0 +1,15 @@
+{
+"TOKEN":"",
+"LogsChannelId":0,
+"BanLogsChannelId":0,
+"KickLogsChannelId":0,
+"AdminRoleID":0,
+"ServerID":0,
+"Points_BadWords":3,
+"Points_BadNick":5,
+"PointsLimit":15,
+"PointsCooldownHoursTime":3,
+"MaxWarnings":3,
+"Account_IdleDaysTime":90,
+"Account_YoungDaysTime":90
+}
