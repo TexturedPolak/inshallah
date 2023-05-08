@@ -13,22 +13,69 @@ HOURS = 3_600      # 1 hour in seconds
 DAYS = 86_400      # 1 day in seconds
 
 # ==============================================================================================
-# bot parametres
-LogsChannelId = 0
-BanLogsChannelId = 0
-KickLogsChannelId = 0
-AdminRoleID=0
-ServerID=0
-TOKEN=""
-
-Points_BadWords = 3
-Points_BadNick = 5
-PointsLimit = 15
-PointsCooldownTime = 3 * HOURS # amount of time after which one penalty point is removed from a user  
-MaxWarnings = 3
-
-Account_IdleTime = 90 * DAYS  # amount of time after which the bot kicks an idle user
-Account_YoungTime = 90 * DAYS # amount of time after which the bot kicks a young account
+# bot parametres loading and checking files
+try:
+    file = open("config.json","r")
+    config = json.loads(file.read())
+    file.close()
+except:
+    print("Your config.json is broken, repair this and restart.")
+    exit()
+TOKEN = config.get("TOKEN")
+LogsChannelId = config.get("LogsChannelId")
+BanLogsChannelId = config.get("BanLogsChannelId")
+KickLogsChannelId = config.get("KickLogsChannelId")
+AdminRoleID = config.get("AdminRoleID")
+ServerID = config.get("ServerID")
+Points_BadWords = config.get("Points_Badwords")
+Points_BadNick = config.get("Points_BadNick")
+PointsLimit = config.get("PointsLimit")
+PointsCooldownTime = config.get("PointsCooldownHoursTime") * HOURS # amount of time after which one penalty point is removed from a user 
+MaxWarnings = config.get("MaxWarnings")
+Account_IdleTime = config.get("Account_IdleDaysTime") * DAYS # amount of time after which the bot kicks an idle user
+Account_YoungTime = config.get("Account_YoungDaysTime") * DAYS # amount of time after which the bot kicks a young account
+def checkFiles():
+    emplyList = []
+    time = Account_IdleTime
+    print("Checking files...")
+    try:
+        file = open("database.json","x")
+        file.close()
+        file = open("database.json","w")
+        file.write(json.dumps(emplyList))
+        file.close()
+        print("Created database.json")
+    except:
+        print("database.json is already created. Pass.")
+    try:
+        file = open("databaseClock.json","x")
+        file.close()
+        file = open("databaseClock.json","w")
+        file.write(json.dumps(emplyList))
+        file.close()
+        print("Created databaseClock.json")
+    except:
+        print("databaseClock.json is already created. Pass.")
+    try:
+        file = open("bans.json","x")
+        file.close()
+        file = open("bans.json","w")
+        file.write(json.dumps(emplyList))
+        file.close()
+        print("Created bans.json")
+    except:
+        print("bans.json is already created. Pass.")
+    try:
+        file = open("time.json","x")
+        file.close()
+        file = open("time.json","w")
+        file.write(str(time))
+        file.close()
+        print("Created time.json")
+    except:
+        print("time.json is already created. Pass.")
+    print("All files checked!")
+checkFiles()
 
 # ==============================================================================================
 
@@ -36,6 +83,7 @@ badwords=['chuj', 'chuja', 'chujek', 'chuju', 'chujem', 'chujnia', 'chujowy', 'c
 
 # ==============================================================================================
 # bot code
+
 
 intents=discord.Intents.all()
 discord.member = True
