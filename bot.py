@@ -40,6 +40,7 @@ MaxWarnings = config.get("MaxWarnings")
 Account_IdleTime = config.get("Account_IdleDaysTime") * DAYS # amount of time after which the bot kicks an idle user
 Account_YoungTime = config.get("Account_YoungDaysTime") * DAYS # amount of time after which the bot kicks a young account
 badwords= config.get("badwords")
+DoAutomodMessages = config.get("DoAutomodMessages")
 def checkFiles():
     emplyList = []
     time = PointsCooldownTime
@@ -357,16 +358,20 @@ async def on_member_ban(guild, member):
             pass
 @bot.event
 async def on_message(message):
+    global DoAutomodMessages
     for i in databaseClock:
         if message.author.id == i.get("userId"):
                 i["timeToKick"] = Account_IdleTime
     if message.content.lower() == "siema":
         await message.channel.send("No siema :)", reference=message)
-    await checkMessage(message)
+    if DoAutomodMessages:
+        await checkMessage(message)
 		    
 @bot.event
 async def on_message_edit(before, after):
-    await checkMessage(after)
+    global DoAutomodMessages
+    if DoAutomodMessages:
+        await checkMessage(after)
 
 @tree.command(name = "clear", description = "Usuń dowolną liczbę wiadomości (uważaj, bo nie ma hamulców)", guild=discord.Object(id=ServerID)) 
 @discord.app_commands.checks.has_role(AdminRoleID)
@@ -498,9 +503,34 @@ async def won(interaction: discord.Interaction, uzytkownik: discord.Member, powo
     embed2 = discord.Embed(colour=discord.Colour.yellow(),title=f"{interaction.user} użył komendy /won")
     await BanLogsChannel.send(embed=embed2)
     await interaction.response.send_message(embed=embed)
-
 @won.error
 async def error_won(interaction, x):
     await interaction.response.send_message(f"(/won) Brak uprawnień, {interaction.user.mention}")
+
+@tree.command(name = "automod", description = "Przestaw ustawienia automoda wiadomości", guild=discord.Object(id=ServerID)) 
+@discord.app_commands.checks.has_role(AdminRoleID)
+@discord.app_commands.choices(przelacz=[
+    discord.app_commands.Choice(name='Włącz', value="Włącz"),
+    discord.app_commands.Choice(name='Wyłącz', value="Wyłącz")])
+
+async def switchAutomod(interaction: discord.Interaction, przelacz: discord.app_commands.Choice[str]):
+    global DoAutomodMessages
+    if przelacz.value=="Włącz":
+        DoAutomodMessages = True
+        config["DoAutomodMessages"]= True
+        file = open("config.json","w")
+        file.write(json.dumps(config))
+        file.close()
+    elif przelacz.value=="Wyłącz":
+        DoAutomodMessages = False
+        config["DoAutomodMessages"]= False
+        file = open("config.json","w")
+        file.write(json.dumps(config))
+        file.close()
+
+@switchAutomod.error
+async def error_switchAutomod(interaction, x):
+    await interaction.response.send_message(f"(/automod) Brak uprawnień, {interaction.user.mention}")
+
 load()
 bot.run(TOKEN)
