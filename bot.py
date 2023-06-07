@@ -521,12 +521,14 @@ async def switchAutomod(interaction: discord.Interaction, przelacz: discord.app_
         file = open("config.json","w")
         file.write(json.dumps(config))
         file.close()
+        await interaction.response.send_message("Sprawdzanie wiadomości włączone!")
     elif przelacz.value=="Wyłącz":
         DoAutomodMessages = False
         config["DoAutomodMessages"]= False
         file = open("config.json","w")
         file.write(json.dumps(config))
         file.close()
+        await interaction.response.send_message("Sprawdzanie wiadmości wyłączone!")
 
 @switchAutomod.error
 async def error_switchAutomod(interaction, x):
