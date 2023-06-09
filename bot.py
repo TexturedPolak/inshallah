@@ -41,6 +41,7 @@ Account_IdleTime = config.get("Account_IdleDaysTime") * DAYS # amount of time af
 Account_YoungTime = config.get("Account_YoungDaysTime") * DAYS # amount of time after which the bot kicks a young account
 badwords= config.get("badwords")
 DoAutomodMessages = config.get("DoAutomodMessages")
+BumpChannelID= config.get("BumpChannelID")
 def checkFiles():
     emplyList = []
     time = PointsCooldownTime
@@ -359,6 +360,7 @@ async def on_member_ban(guild, member):
 @bot.event
 async def on_message(message):
     global DoAutomodMessages
+    global AdminRoleID
     for i in databaseClock:
         if message.author.id == i.get("userId"):
                 i["timeToKick"] = Account_IdleTime
@@ -366,7 +368,14 @@ async def on_message(message):
         await message.channel.send("No siema :)", reference=message)
     if DoAutomodMessages:
         await checkMessage(message)
-		    
+    try:
+        if message.interaction.name == "bump":
+            await asyncio.sleep(1)
+            BumpChannel= bot.get_channel(BumpChannelID)
+            role = discord.utils.get(message.guild.roles, id=AdminRoleID)
+            await BumpChannel.send(f"Czas zrobić bump {role.mention}!")
+    except:
+        pass	    
 @bot.event
 async def on_message_edit(before, after):
     global DoAutomodMessages
