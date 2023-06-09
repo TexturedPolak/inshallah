@@ -6,6 +6,8 @@ import asyncio
 from discord.ext.commands import has_permissions, CheckFailure
 import datetime
 import requests
+from cryptography.fernet import Fernet
+import base64
 
 # ==============================================================================================
 # useful constants
@@ -542,6 +544,58 @@ async def switchAutomod(interaction: discord.Interaction, przelacz: discord.app_
 @switchAutomod.error
 async def error_switchAutomod(interaction, x):
     await interaction.response.send_message(f"(/automod) Brak uprawnień, {interaction.user.mention}")
+
+@tree.command(name = "zaszyfruj", description = "Zaszyfruj dany tekst", guild=discord.Object(id=ServerID)) 
+@discord.app_commands.choices(standard=[
+    discord.app_commands.Choice(name='Base64', value="Base64"),
+    discord.app_commands.Choice(name='Fernet', value="Fernet")])
+async def zaszyfruj(interaction: discord.Interaction, standard: discord.app_commands.Choice[str],wartosc: str,klucz: str=None):
+    if standard.value=="Fernet" and klucz==None:
+        await interaction.response.send_message("Standard Fernet wymaga podania klucza (32 url-safe base64). Nie posiadasz klucza? Wygeneruj komendą (/generuj-klucz).")
+    if wartosc!=None:
+        wartosc=wartosc.encode()
+    if standard.value=="Fernet":
+        klucz=klucz.encode()
+        zaszyfrowany = Fernet(klucz).encrypt(wartosc)
+        await interaction.response.send_message(zaszyfrowany.decode())
+    elif standard.value=="Base64":
+        zaszyfrowany = base64.b64encode(wartosc)
+        await interaction.response.send_message(zaszyfrowany.decode())
+@zaszyfruj.error
+async def error_zaszyfruj(interaction, x):
+    await interaction.response.send_message("Prawdopodobnie podałeś klucz niezgodny z standardem Fernet, albo coś innego poszło nie tak. Wygeneruj klucz komendą (/generuj-klucz)")
+
+
+@tree.command(name = "odszyfruj", description = "Odszyfruj dany tekst", guild=discord.Object(id=ServerID)) 
+@discord.app_commands.choices(standard=[
+    discord.app_commands.Choice(name='Base64', value="Base64"),
+    discord.app_commands.Choice(name='Fernet', value="Fernet")])
+async def odszyfruj(interaction: discord.Interaction, standard: discord.app_commands.Choice[str],wartosc: str,klucz: str=None):
+    if standard.value=="Fernet" and klucz==None:
+        await interaction.response.send_message("Standard Fernet wymaga podania klucza którym zaszyfrowano tekst.")
+    if wartosc!=None:
+        wartosc=wartosc.encode()
+    if standard.value=="Fernet":
+        klucz=klucz.encode()
+        odszyfrowany = Fernet(klucz).decrypt(wartosc)
+        await interaction.response.send_message(odszyfrowany.decode())
+    elif standard.value=="Base64":
+        odszyfrowany = base64.b64decode(wartosc)
+        await interaction.response.send_message(odszyfrowany.decode())
+@odszyfruj.error
+async def error_odszyfruj(interaction, x):
+    await interaction.response.send_message("Jeżeli wybrałeś standard Base64, prawdopodobnie podałeś niepopraną wartość. Jeżeli twoim standardem jest Fernet podałeś niepoprawny klucz lub wartość.")
+
+
+@tree.command(name = "generuj-klucz", description = "Wygeneruj klucz potrzebny do szyfrowania.", guild=discord.Object(id=ServerID)) 
+@discord.app_commands.choices(standard=[
+    discord.app_commands.Choice(name='Fernet', value="Fernet")])
+async def generujKlucz(interaction: discord.Interaction, standard: discord.app_commands.Choice[str]):
+    if standard.value=="Fernet":
+        klucz=Fernet.generate_key()
+        await interaction.response.send_message(klucz.decode())
+
+
 
 load()
 bot.run(TOKEN)
