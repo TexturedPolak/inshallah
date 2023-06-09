@@ -370,7 +370,7 @@ async def on_message(message):
         await checkMessage(message)
     try:
         if message.interaction.name == "bump":
-            await asyncio.sleep(1)
+            await asyncio.sleep(7200)
             BumpChannel= bot.get_channel(BumpChannelID)
             role = discord.utils.get(message.guild.roles, id=AdminRoleID)
             await BumpChannel.send(f"Czas zrobić bump {role.mention}!")
