@@ -381,11 +381,6 @@ async def on_message(message):
         pass
     if message.channel.id in PhothosChannels and len(message.attachments)==0 and message.author.bot == False:
         await message.delete()
-        await message.channel.send(f"{message.author.mention}Na tym kanale można umieszczać tylko zdjęcia bądź inne załączniki oraz krótki opis do nich (w ramach jednej wiadomości).")
-        
-    if message.channel.id in PhothosChannels and len(message.attachments)==0 and message.author.bot == True:
-        await asyncio.sleep(15)
-        await message.delete()
 
 
 @bot.event
@@ -458,9 +453,10 @@ async def error_ksiega(interaction, x):
 async def mandat(interaction: discord.Interaction, uzytkownik: discord.Member, ilosc: int, powod: str):
     addPoints(uzytkownik, ilosc)
     await check(uzytkownik)
-    embed = discord.Embed(colour=discord.Colour.red(),title=f"Zostałeś ukarany {uzytkownik}!")
+    embed = discord.Embed(colour=discord.Colour.red(),title=f"{uzytkownik.mention} otrzymałeś(aś) mandat za nieprzestrzeganie regulaminu.")
     embed.add_field(name="Powód:", value=powod)
-    embed.add_field(name="Ilość punktów", value=str(ilosc))
+    embed.add_field(name="Ilość punktów:", value=str(ilosc))
+    embed.add_field(name="Mandat wlepił:", value=str(interaction.user))
     for i in database:
         if i.get("name")==uzytkownik.id:
             embed2 = discord.Embed(colour=discord.Colour.red(),title=f"Twoja kartoteka obecnie:")
@@ -490,7 +486,7 @@ async def darujKare(interaction: discord.Interaction, uzytkownik: discord.Member
             save()
             await check(uzytkownik)
             LogsChannel = bot.get_channel(LogsChannelId)
-            await LogsChannel.send(f"{interaction.user.mention},odjęto punkty użytkownikowi {uzytkownik.mention}. Liczba odjętych punktów: {ilosc}.")
+            await LogsChannel.send(f"{interaction.user.mention} odjął punkty użytkownikowi {uzytkownik.mention}. Liczba odjętych punktów: {ilosc}.")
             await interaction.response.send_message(f"{interaction.user.mention},odjęto punkty użytkownikowi {uzytkownik.mention}. Liczba odjętych punktów: {ilosc}.")
             czy_isnieje = True
     if czy_isnieje == False:
