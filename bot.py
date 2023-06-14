@@ -44,6 +44,7 @@ Account_YoungTime = config.get("Account_YoungDaysTime") * DAYS # amount of time 
 badwords= config.get("badwords")
 DoAutomodMessages = config.get("DoAutomodMessages")
 BumpChannelID= config.get("BumpChannelID")
+PhothosChannels=config.get("PhothosChannels")
 def checkFiles():
     emplyList = []
     time = PointsCooldownTime
@@ -377,7 +378,16 @@ async def on_message(message):
             role = discord.utils.get(message.guild.roles, id=AdminRoleID)
             await BumpChannel.send(f"Czas zrobić bump {role.mention}!")
     except:
-        pass	    
+        pass
+    if message.channel.id in PhothosChannels and len(message.attachments)==0 and message.author.bot == False:
+        await message.delete()
+        await message.channel.send(f"{message.author.mention}Na tym kanale można umieszczać tylko zdjęcia bądź inne załączniki oraz krótki opis do nich (w ramach jednej wiadomości).")
+        
+    if message.channel.id in PhothosChannels and len(message.attachments)==0 and message.author.bot == True:
+        await asyncio.sleep(15)
+        await message.delete()
+
+
 @bot.event
 async def on_message_edit(before, after):
     global DoAutomodMessages

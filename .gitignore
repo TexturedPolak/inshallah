@@ -1,3 +1,4 @@
 trash/
 *.json
 *.code-workspace
+env/
