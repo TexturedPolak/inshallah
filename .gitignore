@@ -2,3 +2,6 @@ trash/
 *.json
 *.code-workspace
 env/
+*.xml
+*.iml
+
