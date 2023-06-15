@@ -224,7 +224,7 @@ async def checkMessage(message):
                 await message.channel.send(f"{message.author.mention}, nieładnie tak brzydko mówić (+{Points_BadWords} punkty karne) :(")
                 addPoints(message.author, Points_BadWords)
                 await check(message.author)
-               	for i in database:
+                for i in database:
                     if i.get("name")==message.author.id:
                         if i.get("warnings")==None:
                             warnings=0
@@ -254,7 +254,7 @@ async def checkMessage(message):
                 addPoints(message.author, Points_BadWords)
                 word=""
                 await check(message.author)
-               	for i in database:
+                for i in database:
                     if i.get("name")==message.author.id:
                         if i.get("warnings")==None:
                             warnings=0
@@ -269,6 +269,7 @@ async def checkMessage(message):
 @bot.event
 async def on_ready():
     await tree.sync(guild=discord.Object(id=ServerID))
+    await bot.change_presence(status=discord.Status.Online, activity=discord.game('Miłego dnia :)'))
     print("I'm ready!")
     await resetPoints()
 
