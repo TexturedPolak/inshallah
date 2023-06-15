@@ -269,7 +269,7 @@ async def checkMessage(message):
 @bot.event
 async def on_ready():
     await tree.sync(guild=discord.Object(id=ServerID))
-    await bot.change_presence(status=discord.Status.Online, activity=discord.game('Miłego dnia :)'))
+    await bot.change_presence(status=discord.Status.online, activity=discord.game('Miłego dnia :)'))
     print("I'm ready!")
     await resetPoints()
 
