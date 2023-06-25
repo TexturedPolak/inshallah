@@ -4,4 +4,4 @@ trash/
 env/
 *.xml
 *.iml
-
+baza.py
