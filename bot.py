@@ -8,7 +8,7 @@ import datetime
 import requests
 from cryptography.fernet import Fernet
 import base64
-
+import mysql.connector
 # ==============================================================================================
 # useful constants
 
@@ -45,6 +45,21 @@ badwords= config.get("badwords")
 DoAutomodMessages = config.get("DoAutomodMessages")
 BumpChannelID= config.get("BumpChannelID")
 PhothosChannels=config.get("PhothosChannels")
+databaseName=config.get("databaseName")
+databaseHost=config.get("databaseHost")
+databasePort=config.get("databasePort")
+databaseUser=config.get("databaseUser")
+databasePassword=config.get("databasePassword")
+
+mydb = mysql.connector.connect(
+  database=databaseName,  
+  host=databaseHost,
+  port=databasePort,
+  user=databaseUser,
+  password=databasePassword
+)
+mycursor = mydb.cursor()
+
 def checkFiles():
     emplyList = []
     time = PointsCooldownTime
@@ -219,7 +234,14 @@ async def checkMessage(message):
     for i in message.content:
         if i in [" ","!","#","%","^","*","(",")","-","+","_","=","~","`","[","]","{","}",";",":","'",'"',"|",'\\',",","<",".",">","/","?"]:
             dlugoscZbadana+=1
-            if word in badwords: 
+            
+            sql="SELECT word FROM badwords WHERE word=%s"
+            val=[(word)]
+            mycursor.execute(sql,val)
+            badword = mycursor.fetchall()
+
+
+            if word == badword: 
                 await message.delete()
                 await message.channel.send(f"{message.author.mention}, nieładnie tak brzydko mówić (+{Points_BadWords} punkty karne) :(")
                 addPoints(message.author, Points_BadWords)
@@ -248,7 +270,17 @@ async def checkMessage(message):
                 word+= i.lower()
             dlugoscZbadana+=1
         if dlugoscZbadana>=len(message.content):
-            if word in badwords: 
+            sql="SELECT word FROM badwords WHERE word=%s"
+            val=[(word)]
+            mycursor.execute(sql,val)
+            badword = mycursor.fetchall()
+
+            if badword==[]:
+                czyTak=False
+            else:
+                czyTak=True
+
+            if czyTak: 
                 await message.delete()
                 await message.channel.send(f"{message.author.mention}, nieładnie tak brzydko mówić (+{Points_BadWords} punkty karne) :(")
                 addPoints(message.author, Points_BadWords)
