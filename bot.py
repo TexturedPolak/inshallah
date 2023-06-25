@@ -163,27 +163,27 @@ async def resetPoints():
         time-=1
         save()
         await asyncio.sleep(1)
-        for user in databaseClock:
-            if user.get("timeToKick")<=0:
-                czy_isnieje=False
-                for i in database:
-                    if i.get("name")==user.get("userId"):
-                        i["points"]=PointsLimit
-                        czy_isnieje=True
-                if czy_isnieje==False:
-                    database.append({"name":user.get("userId"),"points":PointsLimit})
-                save()
+        #for user in databaseClock:
+            #if user.get("timeToKick")<=0:
+                #czy_isnieje=False
+                #for i in database:
+                    #if i.get("name")==user.get("userId"):
+                   #     i["points"]=PointsLimit
+                  #      czy_isnieje=True
+                #if czy_isnieje==False:
+                 #   database.append({"name":user.get("userId"),"points":PointsLimit})
+                #save()
                 
-                guildDoClock = bot.get_guild(ServerID)
-                member = guildDoClock.get_member(user.get("userId"))
-                await member.send("Zostałeś wyrzucony za bardzo małą aktywność na serwerze.")
-                await check(member) 
-                databaseClock.remove({"userId":user.get("userId"),"timeToKick":user.get("timeToKick")})
-            else:   
-                user["timeToKick"]-=1
-        plik = open("databaseClock.json","w+")
-        plik.write(json.dumps(databaseClock))
-        plik.close()
+                #guildDoClock = bot.get_guild(ServerID)
+                #member = guildDoClock.get_member(user.get("userId"))
+                #await member.send("Zostałeś wyrzucony za bardzo małą aktywność na serwerze.")
+                #await check(member) 
+                #databaseClock.remove({"userId":user.get("userId"),"timeToKick":user.get("timeToKick")})
+            #else:   
+            #    user["timeToKick"]-=1
+        #plik = open("databaseClock.json","w+")
+        #plik.write(json.dumps(databaseClock))
+        #plik.close()
         if time <=0:
             for i in database:
                 if i.get("points")>0:
@@ -404,16 +404,16 @@ async def on_message(message):
         await message.channel.send("No siema :)", reference=message)
     if DoAutomodMessages:
         await checkMessage(message)
-    try:
-        if message.interaction.name == "bump":
-            await asyncio.sleep(7200)
-            BumpChannel= bot.get_channel(BumpChannelID)
-            role = discord.utils.get(message.guild.roles, id=AdminRoleID)
-            await BumpChannel.send(f"Czas zrobić bump {role.mention}!")
-    except:
-        pass
-    if message.channel.id in PhothosChannels and len(message.attachments)==0 and message.author.bot == False:
-        await message.delete()
+    #try:
+     #   if message.interaction.name == "bump":
+      #      await asyncio.sleep(7200)
+       #     BumpChannel= bot.get_channel(BumpChannelID)
+        #    role = discord.utils.get(message.guild.roles, id=AdminRoleID)
+         #   await BumpChannel.send(f"Czas zrobić bump {role.mention}!")
+    #except:
+     #   pass
+    #if message.channel.id in PhothosChannels and len(message.attachments)==0 and message.author.bot == False:
+     #   await message.delete()
 
 
 @bot.event
@@ -481,52 +481,52 @@ async def error_ksiega(interaction, x):
     await interaction.response.send_message(f"(/księga-wykroczeń) Brak uprawnień, {interaction.user.mention}")
 
 
-@tree.command(name = "mandat", description = "Ukaraj kogoś paroma punktami", guild=discord.Object(id=ServerID)) 
-@discord.app_commands.checks.has_role(AdminRoleID)
-async def mandat(interaction: discord.Interaction, uzytkownik: discord.Member, ilosc: int, powod: str):
-    addPoints(uzytkownik, ilosc)
-    await check(uzytkownik)
-    embed = discord.Embed(colour=discord.Colour.red(),title=f"{uzytkownik.mention} otrzymałeś(aś) mandat za nieprzestrzeganie regulaminu.")
-    embed.add_field(name="Powód:", value=powod)
-    embed.add_field(name="Ilość punktów:", value=str(ilosc))
-    embed.add_field(name="Mandat wlepił:", value=str(interaction.user))
-    for i in database:
-        if i.get("name")==uzytkownik.id:
-            embed2 = discord.Embed(colour=discord.Colour.red(),title=f"Twoja kartoteka obecnie:")
-            embed2.add_field(name="Punkty:", value=str(i.get('points')))
-            if i.get("warnings")==None:
-                warnings=0
-            else:
-                warnings=i.get("warnings")
-            embed2.add_field(name="Ostrzeżenia:", value=str(warnings))
-    LogsChannel = bot.get_channel(LogsChannelId)
-    await LogsChannel.send(embed=embed)
-    await interaction.channel.send(embed=embed2)
-    await interaction.response.send_message(embed=embed)
-@mandat.error
-async def error_mandat(interaction, x):
-    await interaction.response.send_message(f"(/mandat) Brak uprawnień, {interaction.user.mention}")
-@tree.command(name = "daruj-kare", description = "Usun parę punktów z czyjegoś konta", guild=discord.Object(id=ServerID)) 
-@discord.app_commands.checks.has_role(AdminRoleID)
-async def darujKare(interaction: discord.Interaction, uzytkownik: discord.Member, ilosc: int):
-    czy_isnieje = False
-    for i in database:
-        if uzytkownik.id == i.get("name"):
-            if i.get("points") <= ilosc:
-                i["points"]=0
-            else:
-                i["points"]-=ilosc
-            save()
-            await check(uzytkownik)
-            LogsChannel = bot.get_channel(LogsChannelId)
-            await LogsChannel.send(f"{interaction.user.mention} odjął punkty użytkownikowi {uzytkownik.mention}. Liczba odjętych punktów: {ilosc}.")
-            await interaction.response.send_message(f"{interaction.user.mention},odjęto punkty użytkownikowi {uzytkownik.mention}. Liczba odjętych punktów: {ilosc}.")
-            czy_isnieje = True
-    if czy_isnieje == False:
-            await interaction.response.send_message("Brak użytkownika w bazie danych.")
-@darujKare.error
-async def error_darujKare(interaction, x):
-    await interaction.response.send_message(f"(/daruj-kare) Brak uprawnień, {interaction.user.mention}")
+#@tree.command(name = "mandat", description = "Ukaraj kogoś paroma punktami", guild=discord.Object(id=ServerID)) 
+#@discord.app_commands.checks.has_role(AdminRoleID)
+#async def mandat(interaction: discord.Interaction, uzytkownik: discord.Member, ilosc: int, powod: str):
+#    addPoints(uzytkownik, ilosc)
+#    await check(uzytkownik)
+#    embed = discord.Embed(colour=discord.Colour.red(),title=f"{uzytkownik.mention} otrzymałeś(aś) mandat za nieprzestrzeganie regulaminu.")
+#    embed.add_field(name="Powód:", value=powod)
+#    embed.add_field(name="Ilość punktów:", value=str(ilosc))
+#    embed.add_field(name="Mandat wlepił:", value=str(interaction.user))
+#    for i in database:
+#        if i.get("name")==uzytkownik.id:
+#            embed2 = discord.Embed(colour=discord.Colour.red(),title=f"Twoja kartoteka obecnie:")
+#            embed2.add_field(name="Punkty:", value=str(i.get('points')))
+#            if i.get("warnings")==None:
+#                warnings=0
+#            else:
+#                warnings=i.get("warnings")
+#            embed2.add_field(name="Ostrzeżenia:", value=str(warnings))
+#    LogsChannel = bot.get_channel(LogsChannelId)
+#    await LogsChannel.send(embed=embed)
+#    await interaction.channel.send(embed=embed2)
+#    await interaction.response.send_message(embed=embed)
+#@mandat.error
+#async def error_mandat(interaction, x):
+#    await interaction.response.send_message(f"(/mandat) Brak uprawnień, {interaction.user.mention}")
+#@tree.command(name = "daruj-kare", description = "Usun parę punktów z czyjegoś konta", guild=discord.Object(id=ServerID)) 
+#@discord.app_commands.checks.has_role(AdminRoleID)
+#async def darujKare(interaction: discord.Interaction, uzytkownik: discord.Member, ilosc: int):
+#    czy_isnieje = False
+#    for i in database:
+#        if uzytkownik.id == i.get("name"):
+#            if i.get("points") <= ilosc:
+#                i["points"]=0
+#            else:
+#                i["points"]-=ilosc
+#            save()
+#            await check(uzytkownik)
+#            LogsChannel = bot.get_channel(LogsChannelId)
+#            await LogsChannel.send(f"{interaction.user.mention} odjął punkty użytkownikowi {uzytkownik.mention}. Liczba odjętych punktów: {ilosc}.")
+#            await interaction.response.send_message(f"{interaction.user.mention},odjęto punkty użytkownikowi {uzytkownik.mention}. Liczba odjętych punktów: {ilosc}.")
+#            czy_isnieje = True
+#    if czy_isnieje == False:
+#            await interaction.response.send_message("Brak użytkownika w bazie danych.")
+#@darujKare.error
+#async def error_darujKare(interaction, x):
+#    await interaction.response.send_message(f"(/daruj-kare) Brak uprawnień, {interaction.user.mention}")
 @tree.command(name = "pal-gume", description = "Do kickowania użytkowników", guild=discord.Object(id=ServerID)) 
 @discord.app_commands.checks.has_role(AdminRoleID)
 async def palGume(interaction: discord.Interaction, uzytkownik: discord.Member, powod: str):
@@ -579,7 +579,6 @@ async def switchAutomod(interaction: discord.Interaction, przelacz: discord.app_
         file.write(json.dumps(config))
         file.close()
         await interaction.response.send_message("Sprawdzanie wiadomości wyłączone!")
-
 @switchAutomod.error
 async def error_switchAutomod(interaction, x):
     await interaction.response.send_message(f"(/automod) Brak uprawnień, {interaction.user.mention}")
