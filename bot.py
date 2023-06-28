@@ -9,6 +9,10 @@ import requests
 from cryptography.fernet import Fernet
 import base64
 import mysql.connector
+import random
+import string
+from captcha.image import ImageCaptcha
+import os
 # ==============================================================================================
 # useful constants
 
@@ -50,7 +54,7 @@ databaseHost=config.get("databaseHost")
 databasePort=config.get("databasePort")
 databaseUser=config.get("databaseUser")
 databasePassword=config.get("databasePassword")
-
+VerificationRoleId=config.get("VerificationRoleId")
 mydb = mysql.connector.connect(
   database=databaseName,  
   host=databaseHost,
@@ -319,22 +323,224 @@ async def on_member_join(member):
     plik.write(json.dumps(databaseClock))
     plik.close()
 
+    # ------- Verification Module --------
+    guild = bot.get_guild(ServerID)
+    admin_role = guild.get_role(AdminRoleID)
+    
+    overwrites = {
+        guild.default_role: discord.PermissionOverwrite(read_messages=False),
+        member: discord.PermissionOverwrite(read_messages=True),
+        admin_role: discord.PermissionOverwrite(read_messages=True)
+    }
+    nameChannel=""
+    nameChannel+="Weryfikacja-"
+    nameChannel+=str(member)
+    channel = await guild.create_text_channel(nameChannel, overwrites=overwrites)
+    embed = discord.Embed(colour=discord.Colour.blue(),title=f"Weryfikacja",description="Prosimy Ciebie abyś odpowiedział(a) na 5 pytań. Przed rozpoczęciem prosimy Cię o dokładne przeczytanie regulaminu.")
+    await channel.send(embed=embed)
+    # Pytanie 6
+    async def pytanieSzesc():
+        class Pytanie(discord.ui.View):
+            @discord.ui.button(label="TAK", row=0, style=discord.ButtonStyle.primary)
+            async def first_button(self, button, interaction):
+                await channel.delete()
+                await member.send("Weryfikacja zakończona sukcesem!")
+                role = discord.utils.get(channel.guild.roles, id=VerificationRoleId)
+                await member.add_roles(role)
+            @discord.ui.button(label="NIE", row=0, style=discord.ButtonStyle.primary)
+            async def second_button(self, button, interaction):
+                await channel.delete()
+                await member.send("Na serwer wpuszczamy osoby tolerancyjne i szanujące każdego, nawet te z tęczowego środowiska.")
+                await member.ban(reason="Osoba anty LGBTQ+")
+        embed = discord.Embed(colour=discord.Colour.blue(),title=f"Pytanie 6",description="Jesteś osobą która szanuje osoby z tęczowego środowiska?")
+        await channel.send(embed=embed,view=Pytanie())
+    # Pytanie 5
+    async def pytaniePiec(ostatnie,ostatniejsze):
+        sql="SELECT pytanie,a,b,c,poprawna FROM pytania WHERE id=%s"
+        value=random.randint(1, 16)
+        val=[(value)]
+        mycursor.execute(sql,val)
+        pytanie = mycursor.fetchall()
+        poprawna=pytanie[0][4]
+        if value == ostatnie or value==ostatniejsze:
+            sql="SELECT pytanie,a,b,c,poprawna FROM pytania WHERE id=%s"
+            value=random.randint(1, 16)
+            val=[(value)]
+            mycursor.execute(sql,val)
+            pytanie = mycursor.fetchall()
+            poprawna=pytanie[0][4]
+        async def sprOdp(odp):
+            if odp==poprawna:
+                await channel.purge(limit=3)
+                await pytanieSzesc()
+            else:
+                await channel.delete()
+                await member.send("Odpowiedziałeś niepoprawnie na pytanie z regulaminu. Spróbuj ponownie.")
+                await member.kick(reason="Pytanie z regulaminu. Niepoprawna weryfikcja.")
+        class Pytanie(discord.ui.View):
+            @discord.ui.button(label="A", row=0, style=discord.ButtonStyle.primary)
+            async def first_button(self, button, interaction):
+                odp="a"
+                await sprOdp(odp)
+            @discord.ui.button(label="B", row=0, style=discord.ButtonStyle.primary)
+            async def second_button(self, button, interaction):
+                odp="b"
+                await sprOdp(odp)
+            @discord.ui.button(label="C", row=0, style=discord.ButtonStyle.primary)
+            async def third_button(self, button, interaction):
+                odp="c"
+                await sprOdp(odp)
+        embed = discord.Embed(colour=discord.Colour.blue(),title=f"Pytanie 5",description="**"+pytanie[0][0]+"**\na) "+pytanie[0][1]+"\nb) "+pytanie[0][2]+"\nc) "+pytanie[0][3])
+        await channel.send(embed=embed,view=Pytanie())
+    # Pytanie 4
+    async def pytanieCztery(ostatnie):
+        sql="SELECT pytanie,a,b,c,poprawna FROM pytania WHERE id=%s"
+        value=random.randint(1, 16)
+        val=[(value)]
+        mycursor.execute(sql,val)
+        pytanie = mycursor.fetchall()
+        poprawna=pytanie[0][4]
+        if value == ostatnie:
+            sql="SELECT pytanie,a,b,c,poprawna FROM pytania WHERE id=%s"
+            value=random.randint(1, 16)
+            val=[(value)]
+            mycursor.execute(sql,val)
+            pytanie = mycursor.fetchall()
+            poprawna=pytanie[0][4]
+        async def sprOdp(odp):
+            if odp==poprawna:
+                await channel.purge(limit=3)
+                await pytaniePiec(value,ostatnie)
+            else:
+                await channel.delete()
+                await member.send("Odpowiedziałeś niepoprawnie na pytanie z regulaminu. Spróbuj ponownie.")
+                await member.kick(reason="Pytanie z regulaminu. Niepoprawna weryfikcja.")
+        class Pytanie(discord.ui.View):
+            @discord.ui.button(label="A", row=0, style=discord.ButtonStyle.primary)
+            async def first_button(self, button, interaction):
+                odp="a"
+                await sprOdp(odp)
+            @discord.ui.button(label="B", row=0, style=discord.ButtonStyle.primary)
+            async def second_button(self, button, interaction):
+                odp="b"
+                await sprOdp(odp)
+            @discord.ui.button(label="C", row=0, style=discord.ButtonStyle.primary)
+            async def third_button(self, button, interaction):
+                odp="c"
+                await sprOdp(odp)
+        embed = discord.Embed(colour=discord.Colour.blue(),title=f"Pytanie 4",description="**"+pytanie[0][0]+"**\na) "+pytanie[0][1]+"\nb) "+pytanie[0][2]+"\nc) "+pytanie[0][3])
+        await channel.send(embed=embed,view=Pytanie())
+    # Pytanie 3
+    async def pytanieTrzy():
+        sql="SELECT pytanie,a,b,c,poprawna FROM pytania WHERE id=%s"
+        value=random.randint(1, 16)
+        val=[(value)]
+        mycursor.execute(sql,val)
+        pytanie = mycursor.fetchall()
+        poprawna=pytanie[0][4]
+        async def sprOdp(odp):
+            if odp==poprawna:
+                await channel.purge(limit=3)
+                await pytanieCztery(value)
+            else:
+                await channel.delete()
+                await member.send("Odpowiedziałeś niepoprawnie na pytanie z regulaminu. Spróbuj ponownie.")
+                await member.kick(reason="Pytanie z regulaminu. Niepoprawna weryfikcja.")
+        class Pytanie(discord.ui.View):
+            @discord.ui.button(label="A", row=0, style=discord.ButtonStyle.primary)
+            async def first_button(self, button, interaction):
+                odp="a"
+                await sprOdp(odp)
+            @discord.ui.button(label="B", row=0, style=discord.ButtonStyle.primary)
+            async def second_button(self, button, interaction):
+                odp="b"
+                await sprOdp(odp)
+            @discord.ui.button(label="C", row=0, style=discord.ButtonStyle.primary)
+            async def third_button(self, button, interaction):
+                odp="c"
+                await sprOdp(odp)
+        embed = discord.Embed(colour=discord.Colour.blue(),title=f"Pytanie 3",description="**"+pytanie[0][0]+"**\na) "+pytanie[0][1]+"\nb) "+pytanie[0][2]+"\nc) "+pytanie[0][3])
+        await channel.send(embed=embed,view=Pytanie())
+    
+    
+    
+    # Pytanie 2
+    async def pytanieDwa(usun):
+        liczba1 = random.randint(1, 20)
+        liczba2 = random.randint(1, 20)
+        wynik = liczba1 + liczba2
+        image = ImageCaptcha(width = 280, height = 90)
+        textCaptcha = str(liczba1)+"+"+str(liczba2)
+        titleCaptcha = textCaptcha+".png"
+        data = image.generate(textCaptcha)
+        image.write(textCaptcha, titleCaptcha)
+        embed = discord.Embed(colour=discord.Colour.blue(),title=f"Pytanie 2",description="Prosimy abyś rozwiązał(a) to proste równanie (zawsze to będzie dodawanie). Zapisz wynik liczbowo np. `20`")
+        if usun==True:
+            usun=False
+            await channel.purge(limit=2)
+        await channel.send(embed=embed)
+        await channel.send(file=discord.File(titleCaptcha))
+        os.remove(titleCaptcha)
+        message = await bot.wait_for("message")
+        input = message.content
+        if input==str(wynik):
+            await channel.purge(limit=1000)
+            await pytanieTrzy()
+        else:
+            embed = discord.Embed(colour=discord.Colour.blue(),title=f"Niepoprawna odpowiedź, spróbuj ponownie!",description="Pamiętaj aby zapisać wynik liczbowo np. `12` !")
+            await channel.send(embed=embed)
+            await pytanieDwa(usun)
+            
+    # Pytanie 1
+    async def pytanieJedenOdp(good):
+        if good==False:
+            await channel.delete()
+            await member.send("Na serwerze przyjmujemy osoby od 16 roku życia. Weryfikacja nieudana.")
+            await member.kick(reason="Nieudana weryfikacja. Wiek poniżej 16 lat.")
+        elif good==True:
+            usun=True
+            await pytanieDwa(usun)
+    embed = discord.Embed(colour=discord.Colour.blue(),title=f"Pytanie 1" ,description="Ile masz lat? Naciśnij guzik najbardziej pasujący do ciebie.")
+    class MyView(discord.ui.View):
+        @discord.ui.button(label="13-15", row=0, style=discord.ButtonStyle.primary)
+        async def first_button(self, button, interaction):
+            good=False
+            await pytanieJedenOdp(good)
+        @discord.ui.button(label="16-25", row=0, style=discord.ButtonStyle.primary)
+        async def second_button(self, button, interaction):
+            good=True
+            await pytanieJedenOdp(good)
+        @discord.ui.button(label="26-35", row=0, style=discord.ButtonStyle.primary)
+        async def third_button(self, button, interaction):
+            good=True
+            await pytanieJedenOdp(good)
+        @discord.ui.button(label="36-45", row=0, style=discord.ButtonStyle.primary)
+        async def four_button(self, button, interaction):
+            good=True
+            await pytanieJedenOdp(good)
+        @discord.ui.button(label="45+", row=0, style=discord.ButtonStyle.primary)
+        async def five_button(self, button, interaction):
+            good=True
+            await pytanieJedenOdp(good)
+    await channel.send(embed=embed, view=MyView())
 @bot.event
 async def on_member_update(before, after):
     for i in badwords:
-        if i in after.nick.lower():
-            await after.edit(nick=before.nick)
-            await after.send(f"Twój nick jest zbyt wulgarny. Został automatycznie zresetowany. Nie zmieniaj go ponownie na taki (+{Points_BadNick} punktów karnych)")
-            czy_isnieje=False
-            for i in database:
-                if i.get("name")==after.id:
-                    i["points"]+=Points_BadNick
-                    czy_isnieje=True
-            if czy_isnieje==False:
-                database.append({"name":after.id,"points":Points_BadNick})
-            save()
-            await check(after)
-
+        try:
+            if i in after.nick.lower():
+                await after.edit(nick=before.nick)
+                await after.send(f"Twój nick jest zbyt wulgarny. Został automatycznie zresetowany. Nie zmieniaj go ponownie na taki (+{Points_BadNick} punktów karnych)")
+                czy_isnieje=False
+                for i in database:
+                    if i.get("name")==after.id:
+                        i["points"]+=Points_BadNick
+                        czy_isnieje=True
+                if czy_isnieje==False:
+                    database.append({"name":after.id,"points":Points_BadNick})
+                save()
+                await check(after)
+        except:
+            continue
 @bot.event
 async def on_member_leave(member):
     for user in databaseClock:

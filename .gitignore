@@ -5,3 +5,4 @@ env/
 *.xml
 *.iml
 baza.py
+*.png
