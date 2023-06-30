@@ -58,6 +58,7 @@ databaseUser=config.get("databaseUser")
 databasePassword=config.get("databasePassword")
 VerificationRoleId=config.get("VerificationRoleId")
 channelLogiWeryfikacja=config.get("channelLogiWeryfikacja")
+verificationCategory=config.get("verificationCategory")
 mydb = mysql.connector.connect(
   database=databaseName,  
   host=databaseHost,
@@ -337,7 +338,8 @@ async def on_member_join(member):
     nameChannel=""
     nameChannel+="Weryfikacja-"
     nameChannel+=str(member)
-    channel = await guild.create_text_channel(nameChannel, overwrites=overwrites)
+    category = discord.utils.get(guild.category_channels, id=verificationCategory)
+    channel = await guild.create_text_channel(nameChannel, overwrites=overwrites, category=category)
     embed = discord.Embed(colour=discord.Colour.blue(),title=f"Weryfikacja",description="Prosimy Ciebie abyś odpowiedział(a) na 5 pytań. Przed rozpoczęciem prosimy Cię o dokładne przeczytanie regulaminu.")
     await channel.send(embed=embed)
     async def verificationWaiting():
@@ -356,6 +358,7 @@ async def on_member_join(member):
             except:
                 pass
             await userData[0].kick(reason="Czas na weryfikację minął!")
+        return None
     stopZegar=False
     loop = asyncio.get_event_loop()
     loop.create_task(verificationWaiting())
@@ -365,7 +368,7 @@ async def on_member_join(member):
             kolor=discord.Colour.red()
         else:
             kolor=discord.Colour.green()
-        embed = discord.Embed(colour=kolor,title=f"Weryfikacja użytkownika {member}",description=logiWeryfikacja)
+        embed = discord.Embed(colour=kolor,title=f"Weryfikacja użytkownika {member}, ID: {member.id}",description=logiWeryfikacja)
         logsChannel = discord.utils.get(bot.get_all_channels(), id=channelLogiWeryfikacja)
         await logsChannel.send(embed=embed)
     # Pytanie 6
