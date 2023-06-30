@@ -314,7 +314,7 @@ async def on_ready():
 async def on_member_join(member):
     if time.time() - member.created_at.timestamp() < Account_YoungTime : 
         await member.send("Twoje konto zostało uznane za skrajnie podejrzane. Spróbuj ponownie kiedy indziej :)")
-        await member.kick(reason="Fresh account")
+        await member.kick(reason="Nowe konto")
     for i in badwords:
         if i in member.display_name.lower():
             await member.send("Twój nick jest zbyt wulgarny. Zmień nick i przyjdź ponownie :)")
