@@ -13,8 +13,6 @@ import random
 import string
 from captcha.image import ImageCaptcha
 import os
-import multiprocessing
-import threading
 # ==============================================================================================
 # useful constants
 
