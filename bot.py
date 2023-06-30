@@ -338,7 +338,8 @@ async def on_member_join(member):
     nameChannel+=str(member)
     category = discord.utils.get(guild.categories, id=verificationCategory)
     channel = await guild.create_text_channel(nameChannel, overwrites=overwrites, category=category)
-    embed = discord.Embed(colour=discord.Colour.blue(),title=f"Weryfikacja",description="Prosimy Ciebie abyś odpowiedział(a) na 5 pytań. Przed rozpoczęciem prosimy Cię o dokładne przeczytanie regulaminu.")
+    embed = discord.Embed(colour=discord.Colour.blue(),title=f"Weryfikacja",description="Prosimy Ciebie abyś odpowiedział(a) na 6 pytań. Przed rozpoczęciem prosimy Cię o dokładne przeczytanie regulaminu. **Proces weryfikacji może być przerywany paru sekundowymi przerwami (max 5 sekund), w oczekiwaniu na wygenerowanie pytania.**")
+    await channel.send(f"{member.mention}")
     await channel.send(embed=embed)
     async def verificationWaiting():
         nonlocal stopZegar
