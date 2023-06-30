@@ -634,7 +634,7 @@ async def on_member_update(before, after):
                 save()
                 await check(after)
         except:
-            continue
+            pass
 @bot.event
 async def on_member_leave(member):
     for user in databaseClock:
