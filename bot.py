@@ -338,7 +338,7 @@ async def on_member_join(member):
     nameChannel=""
     nameChannel+="Weryfikacja-"
     nameChannel+=str(member)
-    category = discord.utils.get(guild.category_channels, id=verificationCategory)
+    category = discord.utils.get(guild.categories, id=verificationCategory)
     channel = await guild.create_text_channel(nameChannel, overwrites=overwrites, category=category)
     embed = discord.Embed(colour=discord.Colour.blue(),title=f"Weryfikacja",description="Prosimy Ciebie abyś odpowiedział(a) na 5 pytań. Przed rozpoczęciem prosimy Cię o dokładne przeczytanie regulaminu.")
     await channel.send(embed=embed)
