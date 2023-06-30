@@ -13,6 +13,8 @@ import random
 import string
 from captcha.image import ImageCaptcha
 import os
+import multiprocessing
+import threading
 # ==============================================================================================
 # useful constants
 
@@ -55,6 +57,7 @@ databasePort=config.get("databasePort")
 databaseUser=config.get("databaseUser")
 databasePassword=config.get("databasePassword")
 VerificationRoleId=config.get("VerificationRoleId")
+channelLogiWeryfikacja=config.get("channelLogiWeryfikacja")
 mydb = mysql.connector.connect(
   database=databaseName,  
   host=databaseHost,
@@ -167,27 +170,27 @@ async def resetPoints():
         time-=1
         save()
         await asyncio.sleep(1)
-        #for user in databaseClock:
-            #if user.get("timeToKick")<=0:
-                #czy_isnieje=False
-                #for i in database:
-                    #if i.get("name")==user.get("userId"):
-                   #     i["points"]=PointsLimit
-                  #      czy_isnieje=True
-                #if czy_isnieje==False:
-                 #   database.append({"name":user.get("userId"),"points":PointsLimit})
-                #save()
+        for user in databaseClock:
+            if user.get("timeToKick")<=0:
+                czy_isnieje=False
+                for i in database:
+                    if i.get("name")==user.get("userId"):
+                        i["points"]=PointsLimit
+                        czy_isnieje=True
+                if czy_isnieje==False:
+                    database.append({"name":user.get("userId"),"points":PointsLimit})
+                save()
                 
-                #guildDoClock = bot.get_guild(ServerID)
-                #member = guildDoClock.get_member(user.get("userId"))
-                #await member.send("Zostałeś wyrzucony za bardzo małą aktywność na serwerze.")
-                #await check(member) 
-                #databaseClock.remove({"userId":user.get("userId"),"timeToKick":user.get("timeToKick")})
-            #else:   
-            #    user["timeToKick"]-=1
-        #plik = open("databaseClock.json","w+")
-        #plik.write(json.dumps(databaseClock))
-        #plik.close()
+                guildDoClock = bot.get_guild(ServerID)
+                member = guildDoClock.get_member(user.get("userId"))
+                await member.send("Zostałeś wyrzucony za bardzo małą aktywność na serwerze.")
+                await check(member) 
+                databaseClock.remove({"userId":user.get("userId"),"timeToKick":user.get("timeToKick")})
+            else:   
+                user["timeToKick"]-=1
+        plik = open("databaseClock.json","w+")
+        plik.write(json.dumps(databaseClock))
+        plik.close()
         if time <=0:
             for i in database:
                 if i.get("points")>0:
@@ -243,7 +246,6 @@ async def checkMessage(message):
             val=[(word)]
             mycursor.execute(sql,val)
             badword = mycursor.fetchall()
-
 
             if word == badword: 
                 await message.delete()
@@ -338,20 +340,65 @@ async def on_member_join(member):
     channel = await guild.create_text_channel(nameChannel, overwrites=overwrites)
     embed = discord.Embed(colour=discord.Colour.blue(),title=f"Weryfikacja",description="Prosimy Ciebie abyś odpowiedział(a) na 5 pytań. Przed rozpoczęciem prosimy Cię o dokładne przeczytanie regulaminu.")
     await channel.send(embed=embed)
+    async def verificationWaiting():
+        nonlocal stopZegar
+        verificationTime=900
+        userData=[member,channel,verificationTime]
+        while userData[2]>0:
+            userData[2]=userData[2]-1
+            await asyncio.sleep(1)
+            if stopZegar:
+                break
+        if stopZegar==False:
+            await userData[1].delete()
+            try:    
+                await userData[0].send("Czas na weryfikację minął!")
+            except:
+                pass
+            await userData[0].kick(reason="Czas na weryfikację minął!")
+    stopZegar=False
+    loop = asyncio.get_event_loop()
+    loop.create_task(verificationWaiting())
+    logiWeryfikacja=""
+    async def sendLogiWeryfikacja():
+        if logiWeryfikacja[-11:]=="nieudana!**":
+            kolor=discord.Colour.red()
+        else:
+            kolor=discord.Colour.green()
+        embed = discord.Embed(colour=kolor,title=f"Weryfikacja użytkownika {member}",description=logiWeryfikacja)
+        logsChannel = discord.utils.get(bot.get_all_channels(), id=channelLogiWeryfikacja)
+        await logsChannel.send(embed=embed)
     # Pytanie 6
     async def pytanieSzesc():
         class Pytanie(discord.ui.View):
             @discord.ui.button(label="TAK", row=0, style=discord.ButtonStyle.primary)
             async def first_button(self, button, interaction):
+                nonlocal stopZegar
+                nonlocal logiWeryfikacja
+                logiWeryfikacja+="**Pytanie 6**\nJesteś osobą która szanuje osoby z tęczowego środowiska?\nOdpowiedź: `TAK`\n\n**Weryfikacja udana!**"
+                await sendLogiWeryfikacja()
                 await channel.delete()
-                await member.send("Weryfikacja zakończona sukcesem!")
+                try:
+                    await member.send("Weryfikacja zakończona sukcesem!")
+                except:
+                    pass
                 role = discord.utils.get(channel.guild.roles, id=VerificationRoleId)
                 await member.add_roles(role)
+                stopZegar=True
+                await asyncio.sleep(2)
             @discord.ui.button(label="NIE", row=0, style=discord.ButtonStyle.primary)
             async def second_button(self, button, interaction):
+                nonlocal stopZegar
+                nonlocal logiWeryfikacja
+                logiWeryfikacja+="**Pytanie 6**\nJesteś osobą która szanuje osoby z tęczowego środowiska?\nOdpowiedź: `NIE`\n\n**Weryfikacja nieudana!**"
+                await sendLogiWeryfikacja()
                 await channel.delete()
-                await member.send("Na serwer wpuszczamy osoby tolerancyjne i szanujące każdego, nawet te z tęczowego środowiska.")
+                try:
+                    await member.send("Na serwer wpuszczamy osoby tolerancyjne i szanujące każdego, nawet te z tęczowego środowiska.")
+                except:
+                    pass
                 await member.ban(reason="Osoba anty LGBTQ+")
+                stopZegar=True
         embed = discord.Embed(colour=discord.Colour.blue(),title=f"Pytanie 6",description="Jesteś osobą która szanuje osoby z tęczowego środowiska?")
         await channel.send(embed=embed,view=Pytanie())
     # Pytanie 5
@@ -370,13 +417,22 @@ async def on_member_join(member):
             pytanie = mycursor.fetchall()
             poprawna=pytanie[0][4]
         async def sprOdp(odp):
+            nonlocal stopZegar
+            nonlocal logiWeryfikacja
             if odp==poprawna:
+                logiWeryfikacja+="**Pytanie 5**\n"+pytanie[0][0]+"\nOdpowiedź: `"+odp+"`\nOdpowiedziano poprawnie.\n\n"
                 await channel.purge(limit=3)
                 await pytanieSzesc()
             else:
+                logiWeryfikacja+="**Pytanie 5**\n"+pytanie[0][0]+"\nOdpowiedź: `"+odp+"`\nPoprawna odpowiedź: "+poprawna+"\n\n**Weryfikacja nieudana!**"
+                await sendLogiWeryfikacja()
                 await channel.delete()
-                await member.send("Odpowiedziałeś niepoprawnie na pytanie z regulaminu. Spróbuj ponownie.")
+                try:
+                    await member.send("Odpowiedziałeś niepoprawnie na pytanie z regulaminu. Spróbuj ponownie.")
+                except:
+                    pass
                 await member.kick(reason="Pytanie z regulaminu. Niepoprawna weryfikcja.")
+                stopZegar=True      
         class Pytanie(discord.ui.View):
             @discord.ui.button(label="A", row=0, style=discord.ButtonStyle.primary)
             async def first_button(self, button, interaction):
@@ -408,13 +464,22 @@ async def on_member_join(member):
             pytanie = mycursor.fetchall()
             poprawna=pytanie[0][4]
         async def sprOdp(odp):
+            nonlocal stopZegar
+            nonlocal logiWeryfikacja
             if odp==poprawna:
+                logiWeryfikacja+="**Pytanie 4**\n"+pytanie[0][0]+"\nOdpowiedź: `"+odp+"`\nOdpowiedziano poprawnie.\n\n"
                 await channel.purge(limit=3)
                 await pytaniePiec(value,ostatnie)
             else:
+                logiWeryfikacja+="**Pytanie 4**\n"+pytanie[0][0]+"\nOdpowiedź: `"+odp+"`\nPoprawna odpowiedź: "+poprawna+"\n\n**Weryfikacja nieudana!**"
+                await sendLogiWeryfikacja()
                 await channel.delete()
-                await member.send("Odpowiedziałeś niepoprawnie na pytanie z regulaminu. Spróbuj ponownie.")
+                try:
+                    await member.send("Odpowiedziałeś niepoprawnie na pytanie z regulaminu. Spróbuj ponownie.")
+                except:
+                    pass
                 await member.kick(reason="Pytanie z regulaminu. Niepoprawna weryfikcja.")
+                stopZegar=True
         class Pytanie(discord.ui.View):
             @discord.ui.button(label="A", row=0, style=discord.ButtonStyle.primary)
             async def first_button(self, button, interaction):
@@ -439,13 +504,22 @@ async def on_member_join(member):
         pytanie = mycursor.fetchall()
         poprawna=pytanie[0][4]
         async def sprOdp(odp):
+            nonlocal stopZegar
+            nonlocal logiWeryfikacja
             if odp==poprawna:
+                logiWeryfikacja+="**Pytanie 3**\n"+pytanie[0][0]+"\nOdpowiedź: `"+odp+"`\nOdpowiedziano poprawnie.\n\n"
                 await channel.purge(limit=3)
                 await pytanieCztery(value)
             else:
+                logiWeryfikacja+="**Pytanie 3**\n"+pytanie[0][0]+"\nOdpowiedź: `"+odp+"`\nPoprawna odpowiedź: "+poprawna+"\n\n**Weryfikacja nieudana!**"
+                await sendLogiWeryfikacja()
                 await channel.delete()
-                await member.send("Odpowiedziałeś niepoprawnie na pytanie z regulaminu. Spróbuj ponownie.")
+                try:
+                    await member.send("Odpowiedziałeś niepoprawnie na pytanie z regulaminu. Spróbuj ponownie.")
+                except:
+                    pass
                 await member.kick(reason="Pytanie z regulaminu. Niepoprawna weryfikcja.")
+                stopZegar=True
         class Pytanie(discord.ui.View):
             @discord.ui.button(label="A", row=0, style=discord.ButtonStyle.primary)
             async def first_button(self, button, interaction):
@@ -466,6 +540,7 @@ async def on_member_join(member):
     
     # Pytanie 2
     async def pytanieDwa(usun):
+        nonlocal logiWeryfikacja
         liczba1 = random.randint(1, 20)
         liczba2 = random.randint(1, 20)
         wynik = liczba1 + liczba2
@@ -484,19 +559,27 @@ async def on_member_join(member):
         message = await bot.wait_for("message")
         input = message.content
         if input==str(wynik):
+            logiWeryfikacja+="**Pytanie 2**\nRównanie: "+str(liczba1)+"+"+str(liczba2)+"\nOdpowiedź: `"+input+"`\nOdpowiedziano poprawnie. \n\n"
             await channel.purge(limit=1000)
             await pytanieTrzy()
         else:
+            logiWeryfikacja+="**Pytanie 2**\nRównanie: "+str(liczba1)+"+"+str(liczba2)+"\nOdpowiedź: `"+input+"`\nOdpowiedziano niepoprawnie.\n\n"
             embed = discord.Embed(colour=discord.Colour.blue(),title=f"Niepoprawna odpowiedź, spróbuj ponownie!",description="Pamiętaj aby zapisać wynik liczbowo np. `12` !")
             await channel.send(embed=embed)
             await pytanieDwa(usun)
             
     # Pytanie 1
     async def pytanieJedenOdp(good):
+        nonlocal stopZegar
         if good==False:
             await channel.delete()
-            await member.send("Na serwerze przyjmujemy osoby od 16 roku życia. Weryfikacja nieudana.")
+            try:
+                await member.send("Na serwerze przyjmujemy osoby od 16 roku życia. Weryfikacja nieudana.")
+            except:
+                pass
             await member.kick(reason="Nieudana weryfikacja. Wiek poniżej 16 lat.")
+            stopZegar=True
+        
         elif good==True:
             usun=True
             await pytanieDwa(usun)
@@ -504,22 +587,33 @@ async def on_member_join(member):
     class MyView(discord.ui.View):
         @discord.ui.button(label="13-15", row=0, style=discord.ButtonStyle.primary)
         async def first_button(self, button, interaction):
+            nonlocal logiWeryfikacja
+            logiWeryfikacja+="**Pytanie 1**\nWiek\nOdpowiedź: `13-15`\n\n**Weryfikacja nieudana!**"
+            await sendLogiWeryfikacja()
             good=False
             await pytanieJedenOdp(good)
         @discord.ui.button(label="16-25", row=0, style=discord.ButtonStyle.primary)
         async def second_button(self, button, interaction):
+            nonlocal logiWeryfikacja
+            logiWeryfikacja+="**Pytanie 1**\nWiek\nOdpowiedź: `16-25`\n\n"
             good=True
             await pytanieJedenOdp(good)
         @discord.ui.button(label="26-35", row=0, style=discord.ButtonStyle.primary)
         async def third_button(self, button, interaction):
+            nonlocal logiWeryfikacja
+            logiWeryfikacja+="**Pytanie 1**\nWiek\nOdpowiedź: `26-35`\n\n"
             good=True
             await pytanieJedenOdp(good)
         @discord.ui.button(label="36-45", row=0, style=discord.ButtonStyle.primary)
         async def four_button(self, button, interaction):
+            nonlocal logiWeryfikacja
+            logiWeryfikacja+="**Pytanie 1**\nWiek\nOdpowiedź: `36-45`\n\n"
             good=True
             await pytanieJedenOdp(good)
         @discord.ui.button(label="45+", row=0, style=discord.ButtonStyle.primary)
         async def five_button(self, button, interaction):
+            nonlocal logiWeryfikacja
+            logiWeryfikacja+="**Pytanie 1**\nWiek\nOdpowiedź: `45+`\n\n"
             good=True
             await pytanieJedenOdp(good)
     await channel.send(embed=embed, view=MyView())
@@ -555,7 +649,7 @@ async def on_member_remove(member):
     guild = member.guild
     async for entry in guild.audit_logs(limit=1, action=discord.AuditLogAction.kick):
         if entry.target == member:
-            embed = discord.Embed(colour=discord.Colour.red(),title=f"{member} został wyrzucony przez {entry.user}")
+            embed = discord.Embed(colour=discord.Colour.red(),title=f"{member} został wyrzucony")
             embed.add_field(name="Powód:", value=entry.reason)
             embed.add_field(name="ID:", value=member.id)
             KickLogsChannel = bot.get_channel(KickLogsChannelId)
@@ -588,7 +682,7 @@ async def on_member_ban(guild, member):
     guild = member.guild
     async for entry in guild.audit_logs(limit=1, action=discord.AuditLogAction.ban):
         if entry.target == member:
-            embed = discord.Embed(colour=discord.Colour.red(),title=f"{member} został zbanowany przez {entry.user}")
+            embed = discord.Embed(colour=discord.Colour.red(),title=f"{member} został zbanowany")
             embed.add_field(name="Powód:", value=entry.reason)
             embed.add_field(name="ID:", value=member.id)
             BanLogsChannel = bot.get_channel(BanLogsChannelId)
