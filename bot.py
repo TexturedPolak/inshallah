@@ -367,7 +367,7 @@ async def on_member_join(member):
     nameChannel+=str(member)
     category = discord.utils.get(guild.categories, id=verificationCategory)
     channel = await guild.create_text_channel(nameChannel, overwrites=overwrites, category=category)
-    embed = discord.Embed(colour=discord.Colour.blue(),title=f"Weryfikacja",description="Prosimy Ciebie abyś odpowiedział(a) na 6 pytań. Przed rozpoczęciem prosimy Cię o dokładne przeczytanie regulaminu. **Proces weryfikacji może być przerywany paru sekundowymi przerwami (max 5 sekund), w oczekiwaniu na wygenerowanie pytania.**")
+    embed = discord.Embed(colour=discord.Colour.blue(),title=f"Weryfikacja",description="Prosimy Ciebie abyś odpowiedział(a) na 5 pytań. Przed rozpoczęciem prosimy Cię o dokładne przeczytanie regulaminu. **Proces weryfikacji może być przerywany paru sekundowymi przerwami (max 5 sekund), w oczekiwaniu na wygenerowanie pytania.**")
     await channel.send(f"{member.mention}")
     await channel.send(embed=embed)
     async def verificationWaiting():
@@ -452,8 +452,15 @@ async def on_member_join(member):
             nonlocal logiWeryfikacja
             if odp==poprawna:
                 logiWeryfikacja+="**Pytanie 5**\n"+pytanie[0][0]+"\nOdpowiedź: `"+odp+"`\nOdpowiedziano poprawnie.\n\n"
-                await channel.purge(limit=3)
-                await pytanieSzesc()
+                await sendLogiWeryfikacja()
+                await channel.delete()
+                try:
+                    await member.send("Weryfikacja zakończona sukcesem!")
+                except:
+                    pass
+                role = discord.utils.get(channel.guild.roles, id=VerificationRoleId)
+                await member.add_roles(role)
+                stopZegar=True
             else:
                 logiWeryfikacja+="**Pytanie 5**\n"+pytanie[0][0]+"\nOdpowiedź: `"+odp+"`\nPoprawna odpowiedź: "+poprawna+"\n\n**Weryfikacja nieudana!**"
                 await sendLogiWeryfikacja()
@@ -981,14 +988,14 @@ async def dajtaXPError(interaction,x):
     await interaction.response.send_message("Brak uprawnień.")
 @tree.command(name = "ranking", description = "Pokazuje ranking", guild=discord.Object(id=ServerID)) 
 async def dajtaXP(interaction: discord.Interaction):
-    sql="SELECT * FROM levele ORDER BY xp DESC"
+    sql="SELECT * FROM levele ORDER BY xp DESC LIMIT 10"
     mycursor.execute(sql)
     myresults = mycursor.fetchall()
     tekst=""
     licznik=1
     for result in myresults:
         user = bot.get_user(int(result[0]))
-        tekst+="**"+str(licznik)+". "+str(user)+"**"+str(result[1])+" XP\n"+str(result[2])+" level\n"
+        tekst+="**"+str(licznik)+". "+str(user)+"**"+"Punkty doświadczenia: "+str(result[1])+"\n"+"Poziom: "+str(result[2])+"\n"
         licznik+=1
     embed = embed = discord.Embed(colour=discord.Colour.blue(),title=f"Ranking",description=tekst)
     await interaction.response.send_message(embed=embed)
