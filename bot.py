@@ -13,6 +13,7 @@ import random
 import string
 from captcha.image import ImageCaptcha
 import os
+import math
 # ==============================================================================================
 # useful constants
 
@@ -131,7 +132,35 @@ plik.close()
 plik = open("database.json","r")
 database = json.loads(plik.read())
 plik.close()
+def dajLevele(userID):
+    sql= "SELECT xp FROM levele WHERE discordId=%s"
+    val =[(userID)]
+    mycursor.execute(sql,val)
+    result = mycursor.fetchall()
+    level=int(math.sqrt(result[0][0]/10))
+    sql = "UPDATE levele SET level = %s WHERE discordId=%s"
+    val=[level,userID]
+    mycursor.execute(sql,val)
+    mydb.commit()
 
+def dodajXP(ilosc,userID):
+    sql= "SELECT * FROM levele WHERE discordId=%s"
+    val =[(userID)]
+    mycursor.execute(sql,val)
+    result = mycursor.fetchall()
+    user = bot.get_user(int(userID))
+    if result == [] and user.bot == False:
+        sql = "INSERT INTO levele VALUES (%s,%s,%s)"
+        val = [userID,ilosc,0]
+        mycursor.execute(sql, val)
+        mydb.commit()
+    elif user.bot == False:
+        sql = "UPDATE levele SET xp = xp+%s WHERE discordId=%s"
+        val=[ilosc,userID]
+        mycursor.execute(sql,val)
+        mydb.commit()
+    if user.bot==False:
+        dajLevele(userID)
 
 async def check(member):
     for i in database:
@@ -699,6 +728,11 @@ async def on_member_ban(guild, member):
 async def on_message(message):
     global DoAutomodMessages
     global AdminRoleID
+    dodajXP(len(message.content),str(message.author.id))
+    wiad = message.content
+    for i in ["dzięki","dzieki","dzienki","thx","dziękuję","dziekuje","dziękuje"]:
+        if i in wiad.lower():
+            dodajXP(10,str(message.author.id))
     for i in databaseClock:
         if message.author.id == i.get("userId"):
                 i["timeToKick"] = Account_IdleTime
@@ -935,7 +969,28 @@ async def generujKlucz(interaction: discord.Interaction, standard: discord.app_c
         klucz=Fernet.generate_key()
         await interaction.response.send_message(klucz.decode())
 
-
-
+@tree.command(name = "dodaj-xp", description = "Dodaje xp", guild=discord.Object(id=ServerID)) 
+@discord.app_commands.checks.has_role(AdminRoleID)
+async def dajtaXP(interaction: discord.Interaction, uzytkownik: discord.Member, ilosc: int):
+    dodajXP(ilosc,str(uzytkownik.id))
+    embed = discord.Embed(colour=discord.Colour.green(),title=f"Dodano punkty użytkownikowi {uzytkownik}")
+    embed.add_field(name="Ilość:", value=str(ilosc))
+    await interaction.response.send_message(embed=embed)
+@dajtaXP.error
+async def dajtaXPError(interaction,x):
+    await interaction.response.send_message("Brak uprawnień.")
+@tree.command(name = "ranking", description = "Pokazuje ranking", guild=discord.Object(id=ServerID)) 
+async def dajtaXP(interaction: discord.Interaction):
+    sql="SELECT * FROM levele ORDER BY xp DESC"
+    mycursor.execute(sql)
+    myresults = mycursor.fetchall()
+    tekst=""
+    licznik=1
+    for result in myresults:
+        user = bot.get_user(int(result[0]))
+        tekst+="**"+str(licznik)+". "+str(user)+"**"+str(result[1])+" XP\n"+str(result[2])+" level\n"
+        licznik+=1
+    embed = embed = discord.Embed(colour=discord.Colour.blue(),title=f"Ranking",description=tekst)
+    await interaction.response.send_message(embed=embed)
 load()
 bot.run(TOKEN)
