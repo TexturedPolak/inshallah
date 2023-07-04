@@ -58,6 +58,8 @@ databasePassword=config.get("databasePassword")
 VerificationRoleId=config.get("VerificationRoleId")
 channelLogiWeryfikacja=config.get("channelLogiWeryfikacja")
 verificationCategory=config.get("verificationCategory")
+levelsChannel=config.get("levelsChannel")
+welcomeChannel=config.get("welcomeChannel")
 mydb = mysql.connector.connect(
   database=databaseName,  
   host=databaseHost,
@@ -389,6 +391,7 @@ async def on_member_join(member):
             except:
                 pass
             await userData[0].kick(reason="Czas na weryfikację minął!")
+            await sendLogiWeryfikacja()
         return None
     stopZegar=False
     loop = asyncio.get_event_loop()
@@ -463,6 +466,8 @@ async def on_member_join(member):
                     pass
                 role = discord.utils.get(channel.guild.roles, id=VerificationRoleId)
                 await member.add_roles(role)
+                welChannel = discord.utils.get(bot.get_all_channels(), id=welcomeChannel)
+                await welChannel.send(f"{member.mention}, witamy na serwerze! :partying_face:")
                 stopZegar=True
             else:
                 logiWeryfikacja+="**Pytanie 5**\n"+pytanie[0][0]+"\nOdpowiedź: `"+odp+"`\nPoprawna odpowiedź: "+poprawna+"\n\n**Weryfikacja nieudana!**"
