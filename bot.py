@@ -60,6 +60,7 @@ channelLogiWeryfikacja=config.get("channelLogiWeryfikacja")
 verificationCategory=config.get("verificationCategory")
 levelsChannel=config.get("levelsChannel")
 welcomeChannel=config.get("welcomeChannel")
+byeChannel=config.get("byeChannel")
 mydb = mysql.connector.connect(
   database=databaseName,  
   host=databaseHost,
@@ -134,7 +135,7 @@ plik.close()
 plik = open("database.json","r")
 database = json.loads(plik.read())
 plik.close()
-def dajLevele(userID):
+async def dajLevele(userID, beforeLevel):
     sql= "SELECT xp FROM levele WHERE discordId=%s"
     val =[(userID)]
     mycursor.execute(sql,val)
@@ -144,25 +145,31 @@ def dajLevele(userID):
     val=[level,userID]
     mycursor.execute(sql,val)
     mydb.commit()
-
-def dodajXP(ilosc,userID):
+    if level>beforeLevel:
+        channel = discord.utils.get(bot.get_all_channels(), id=levelsChannel)
+        user = bot.get_user(int(userID))
+        embed = discord.Embed(colour=discord.Colour.green(),title=f"{user.display_name} zdobył {level} poziom! Gratulujemy :grin:")
+        await channel.send(embed=embed)
+async def dodajXP(ilosc,userID):
     sql= "SELECT * FROM levele WHERE discordId=%s"
     val =[(userID)]
     mycursor.execute(sql,val)
     result = mycursor.fetchall()
     user = bot.get_user(int(userID))
     if result == [] and user.bot == False:
+        beforeLevel=0
         sql = "INSERT INTO levele VALUES (%s,%s,%s)"
         val = [userID,ilosc,0]
         mycursor.execute(sql, val)
         mydb.commit()
     elif user.bot == False:
+        beforeLevel=result[0][2]
         sql = "UPDATE levele SET xp = xp+%s WHERE discordId=%s"
         val=[ilosc,userID]
         mycursor.execute(sql,val)
         mydb.commit()
     if user.bot==False:
-        dajLevele(userID)
+        await dajLevele(userID,beforeLevel)
 
 async def check(member):
     for i in database:
@@ -398,10 +405,10 @@ async def on_member_join(member):
     loop.create_task(verificationWaiting())
     logiWeryfikacja=""
     async def sendLogiWeryfikacja():
-        if logiWeryfikacja[-11:]=="nieudana!**":
-            kolor=discord.Colour.red()
-        else:
+        if logiWeryfikacja[-8:]=="udana!**":
             kolor=discord.Colour.green()
+        else:
+            kolor=discord.Colour.red()
         embed = discord.Embed(colour=kolor,title=f"Weryfikacja użytkownika {member}, ID: {member.id}",description=logiWeryfikacja)
         logsChannel = discord.utils.get(bot.get_all_channels(), id=channelLogiWeryfikacja)
         await logsChannel.send(embed=embed)
@@ -457,7 +464,7 @@ async def on_member_join(member):
             nonlocal stopZegar
             nonlocal logiWeryfikacja
             if odp==poprawna:
-                logiWeryfikacja+="**Pytanie 5**\n"+pytanie[0][0]+"\nOdpowiedź: `"+odp+"`\nOdpowiedziano poprawnie.\n\n"
+                logiWeryfikacja+="**Pytanie 5**\n"+pytanie[0][0]+"\nOdpowiedź: `"+odp+"`\nOdpowiedziano poprawnie.\n\n**Weryfikacja udana!**"
                 await sendLogiWeryfikacja()
                 await channel.delete()
                 try:
@@ -689,9 +696,12 @@ async def on_member_leave(member):
                 databaseClock.remove({"userId":user.get("userId"),"timeToKick":user.get("timeToKick")})
         except:
             pass
-
+    channel = discord.utils.get(bot.get_all_channels(), id=byeChannel)
+    await channel.send(f"{member.mention} opuścił nas :( ")
 @bot.event
 async def on_member_remove(member):
+    channel = discord.utils.get(bot.get_all_channels(), id=byeChannel)
+    await channel.send(f"{member.mention} opuścił nas :( ")
     guild = member.guild
     async for entry in guild.audit_logs(limit=1, action=discord.AuditLogAction.kick):
         if entry.target == member:
@@ -743,11 +753,11 @@ async def on_member_ban(guild, member):
 async def on_message(message):
     global DoAutomodMessages
     global AdminRoleID
-    dodajXP(len(message.content),str(message.author.id))
+    await dodajXP(len(message.content),str(message.author.id))
     wiad = message.content
     for i in ["dzięki","dzieki","dzienki","thx","dziękuję","dziekuje","dziękuje"]:
         if i in wiad.lower():
-            dodajXP(10,str(message.author.id))
+            await dodajXP(10,str(message.author.id))
     for i in databaseClock:
         if message.author.id == i.get("userId"):
                 i["timeToKick"] = Account_IdleTime
@@ -987,7 +997,7 @@ async def generujKlucz(interaction: discord.Interaction, standard: discord.app_c
 @tree.command(name = "dodaj-xp", description = "Dodaje xp", guild=discord.Object(id=ServerID)) 
 @discord.app_commands.checks.has_role(AdminRoleID)
 async def dajtaXP(interaction: discord.Interaction, uzytkownik: discord.Member, ilosc: int):
-    dodajXP(ilosc,str(uzytkownik.id))
+    await dodajXP(ilosc,str(uzytkownik.id))
     embed = discord.Embed(colour=discord.Colour.green(),title=f"Dodano punkty użytkownikowi {uzytkownik}")
     embed.add_field(name="Ilość:", value=str(ilosc))
     await interaction.response.send_message(embed=embed)
@@ -1006,5 +1016,19 @@ async def dajtaXP(interaction: discord.Interaction):
         embed.add_field(name=f"**{licznik}. {user}**", value=f"Punkty doświadczenia: {result[1]}\nPoziom: {result[2]}",inline=False)
         licznik+=1
     await interaction.response.send_message(embed=embed)
+@tree.command(name = "moj-poziom", description = "Pokazuje twój poziom", guild=discord.Object(id=ServerID)) 
+async def dajtaXP(interaction: discord.Interaction):
+    sql="SELECT * FROM levele WHERE discordId=%s"
+    val=[(interaction.user.id)]
+    mycursor.execute(sql,val)
+    myresults = mycursor.fetchall()
+    if myresults!=[]:
+        embed = discord.Embed(colour=discord.Colour.gold(),title=f"{interaction.user.display_name}, oto twoje osiągnięcia:")
+        embed.add_field(name=f"Punkty Doświadczenia:", value=f"{myresults[0][1]}")
+        embed.add_field(name=f"Poziom:", value=f"{myresults[0][2]}")
+        await interaction.response.send_message(embed=embed)
+    else:
+        embed = discord.Embed(colour=discord.Colour.red(),title=f"{interaction.user.display_name}, nie posiadasz punktów doświadczeń! Pisz dalej :)")
+        await interaction.response.send_message(embed=embed)
 load()
 bot.run(TOKEN)
