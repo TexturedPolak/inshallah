@@ -1005,7 +1005,7 @@ async def dajtaXP(interaction: discord.Interaction, uzytkownik: discord.Member, 
 async def dajtaXPError(interaction,x):
     await interaction.response.send_message("Brak uprawnień.")
 @tree.command(name = "ranking", description = "Pokazuje ranking", guild=discord.Object(id=ServerID)) 
-async def dajtaXP(interaction: discord.Interaction):
+async def ranking(interaction: discord.Interaction):
     sql="SELECT * FROM levele ORDER BY xp DESC LIMIT 10"
     mycursor.execute(sql)
     myresults = mycursor.fetchall()
@@ -1017,7 +1017,7 @@ async def dajtaXP(interaction: discord.Interaction):
         licznik+=1
     await interaction.response.send_message(embed=embed)
 @tree.command(name = "moj-poziom", description = "Pokazuje twój poziom", guild=discord.Object(id=ServerID)) 
-async def dajtaXP(interaction: discord.Interaction):
+async def mojPoziom(interaction: discord.Interaction):
     sql="SELECT * FROM levele WHERE discordId=%s"
     val=[(interaction.user.id)]
     mycursor.execute(sql,val)
