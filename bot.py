@@ -342,7 +342,10 @@ async def on_ready():
 @bot.event
 async def on_member_join(member):
     if time.time() - member.created_at.timestamp() < Account_YoungTime : 
-        await member.send("Twoje konto zostało uznane za skrajnie podejrzane. Spróbuj ponownie kiedy indziej :)")
+        try:
+            await member.send("Twoje konto zostało uznane za skrajnie podejrzane. Spróbuj ponownie kiedy indziej :)")
+        except:
+            pass
         await member.kick(reason="Nowe konto")
     for i in badwords:
         if i in member.display_name.lower():
@@ -691,7 +694,7 @@ async def on_member_remove(member):
             embed.add_field(name="Powód:", value=entry.reason)
             embed.add_field(name="ID:", value=member.id)
             KickLogsChannel = bot.get_channel(KickLogsChannelId)
-            await KickLogsChannel.send(embed=embed)
+            #await KickLogsChannel.send(embed=embed)
     for user in databaseClock:
         try:
             if user.get("userId") == member.id:
@@ -724,7 +727,7 @@ async def on_member_ban(guild, member):
             embed.add_field(name="Powód:", value=entry.reason)
             embed.add_field(name="ID:", value=member.id)
             BanLogsChannel = bot.get_channel(BanLogsChannelId)
-            await BanLogsChannel.send(embed=embed)
+            #await BanLogsChannel.send(embed=embed)
     for user in databaseClock:
         try:
             if user.get("userId") == member.id:
@@ -991,13 +994,12 @@ async def dajtaXP(interaction: discord.Interaction):
     sql="SELECT * FROM levele ORDER BY xp DESC LIMIT 10"
     mycursor.execute(sql)
     myresults = mycursor.fetchall()
-    tekst=""
+    embed = discord.Embed(colour=discord.Colour.blue(),title=f"Ranking")
     licznik=1
     for result in myresults:
         user = bot.get_user(int(result[0]))
-        tekst+="**"+str(licznik)+". "+str(user)+"**"+"Punkty doświadczenia: "+str(result[1])+"\n"+"Poziom: "+str(result[2])+"\n"
+        embed.add_field(name=f"**{licznik}. {user}**", value=f"Punkty doświadczenia: {result[1]}\nPoziom: {result[2]}",inline=False)
         licznik+=1
-    embed = embed = discord.Embed(colour=discord.Colour.blue(),title=f"Ranking",description=tekst)
     await interaction.response.send_message(embed=embed)
 load()
 bot.run(TOKEN)
