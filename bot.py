@@ -582,15 +582,15 @@ async def on_member_join(member):
     # Pytanie 2
     async def pytanieDwa(usun):
         nonlocal logiWeryfikacja
-        liczba1 = random.randint(1, 20)
-        liczba2 = random.randint(1, 20)
-        wynik = liczba1 + liczba2
+        liczba1 = random.randint(1, 10)
+        liczba2 = random.randint(1, 10)
+        wynik = liczba1 * liczba2
         image = ImageCaptcha(width = 280, height = 90)
-        textCaptcha = str(liczba1)+"+"+str(liczba2)
+        textCaptcha = str(liczba1)+"*"+str(liczba2)
         titleCaptcha = textCaptcha+".png"
         data = image.generate(textCaptcha)
         image.write(textCaptcha, titleCaptcha)
-        embed = discord.Embed(colour=discord.Colour.blue(),title=f"Pytanie 2",description="Prosimy abyś rozwiązał(a) to proste równanie (zawsze to będzie dodawanie). Zapisz wynik liczbowo np. `20`")
+        embed = discord.Embed(colour=discord.Colour.blue(),title=f"Pytanie 2",description="Prosimy abyś rozwiązał(a) to proste równanie (zawsze to będzie mnożenie). Zapisz wynik liczbowo np. `20`")
         if usun==True:
             usun=False
             await channel.purge(limit=2)
