@@ -135,6 +135,16 @@ plik.close()
 plik = open("database.json","r")
 database = json.loads(plik.read())
 plik.close()
+def leveleNapraw():
+    sql= "SELECT * FROM levele"
+    mycursor.execute(sql)
+    results = mycursor.fetchall()
+    for result in results:
+        level=int(math.sqrt(result[1]/10))
+        sql = "UPDATE levele SET level = %s WHERE discordId=%s"
+        val=[level,result[0]]
+        mycursor.execute(sql,val)
+        mydb.commit()
 async def dajLevele(userID, beforeLevel):
     sql= "SELECT xp FROM levele WHERE discordId=%s"
     val =[(userID)]
@@ -149,6 +159,7 @@ async def dajLevele(userID, beforeLevel):
         channel = discord.utils.get(bot.get_all_channels(), id=levelsChannel)
         user = bot.get_user(int(userID))
         embed = discord.Embed(colour=discord.Colour.green(),title=f"{user.display_name} zdobył {level} poziom! Gratulujemy :grin:")
+        await channel.send(f"{user.mention}")
         await channel.send(embed=embed)
 async def dodajXP(ilosc,userID):
     sql= "SELECT * FROM levele WHERE discordId=%s"
@@ -753,7 +764,7 @@ async def on_member_ban(guild, member):
 async def on_message(message):
     global DoAutomodMessages
     global AdminRoleID
-    await dodajXP(len(message.content),str(message.author.id))
+    await dodajXP(int(len(message.content)/5),str(message.author.id))
     wiad = message.content
     for i in ["dzięki","dzieki","dzienki","thx","dziękuję","dziekuje","dziękuje"]:
         if i in wiad.lower():
