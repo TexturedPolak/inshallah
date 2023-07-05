@@ -158,7 +158,7 @@ async def dajLevele(userID, beforeLevel):
     if level>beforeLevel:
         channel = discord.utils.get(bot.get_all_channels(), id=levelsChannel)
         user = bot.get_user(int(userID))
-        embed = discord.Embed(colour=discord.Colour.green(),title=f"{user.display_name} zdobył {level} poziom! Gratulujemy :grin:")
+        embed = discord.Embed(colour=discord.Colour.green(),title=f"{user.display_name} zdobył(a) {level} poziom! Gratulujemy :grin:")
         await channel.send(f"{user.mention}")
         await channel.send(embed=embed)
 async def dodajXP(ilosc,userID):
