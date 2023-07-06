@@ -736,7 +736,7 @@ async def on_member_ban(guild, member):
     async for entry in guild.bans(limit=10):
         if entry.user.id == member.id:
             banned_reason=entry.reason
-    bans.append({"dateBan":str(datetime.datetime.now()),"id":str(member.id),"reason":str(banned_reason),"caughtNick":str(member),"accCreated":str(member.created_at.astimezone()),"joinServer":str(member.joined_at.astimezone())})
+    bans.append({"dateBan":str(datetime.datetime.now()),"id":str(member.id),"reason":str(banned_reason),"caughtNick":str(member),"accCreated":str(member.created_at.astimezone())})
     plik = open("bans.json","w+")
     plik.write(json.dumps(bans))
     plik.close()
