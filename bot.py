@@ -14,11 +14,11 @@ import string
 from captcha.image import ImageCaptcha
 import os
 import math
-from craiyon import Craiyon, craiyon_utils
-from io import BytesIO
-import cv2
-from PIL import Image
-import tempfile
+#from craiyon import Craiyon, craiyon_utils
+#from io import BytesIO
+#import cv2
+#from PIL import Image
+#import tempfile
 # ==============================================================================================
 # useful constants
 
@@ -176,7 +176,8 @@ async def dodajXP(ilosc,userID):
         mycursor.execute(sql,val)
         result = mycursor.fetchall()
     except:
-        os.startfile(__file__)
+        print("Restart")
+        await bot.change_presence(status=discord.Status.online, activity=discord.Game('Restartowanie!'))
         os._exit(1)
 
     user = bot.get_user(int(userID))
@@ -257,10 +258,16 @@ async def resetPoints():
                 if i.get("points")>0:
                     i["points"]-=1
             time=PointsCooldownTime
-
+            plik = open("time.json","w+")
+            plik.write(str(time))
+            plik.close()
+            print("Restart")
+            await bot.change_presence(status=discord.Status.online, activity=discord.Game('Restartowanie!'))
+            os._exit(1)
         plik = open("time.json","w+")
         plik.write(str(time))
         plik.close()
+
 
 def load():
     global database
@@ -368,7 +375,7 @@ async def checkMessage(message):
 @bot.event
 async def on_ready():
     await tree.sync(guild=discord.Object(id=ServerID))
-    await bot.change_presence(status=discord.Status.online, activity=discord.Game('Problemy techniczne...'))
+    await bot.change_presence(status=discord.Status.online, activity=discord.Game('Miłego dnia :)'))
     print("I'm ready!")
     await resetPoints()
 
@@ -1091,5 +1098,5 @@ async def mojPoziom(interaction: discord.Interaction):
         #images1.append(image)
     #await interaction.followup.send(files=images1)
 load()
-generator = Craiyon()
+#generator = Craiyon()
 bot.run(TOKEN)
