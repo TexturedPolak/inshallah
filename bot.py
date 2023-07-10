@@ -172,10 +172,12 @@ async def dodajXP(ilosc,userID):
     global mydb
     sql= "SELECT * FROM levele WHERE discordId=%s"
     val =[(userID)]
-    
-    mycursor.execute(sql,val)
-    result = mycursor.fetchall()
-    
+    try:
+        mycursor.execute(sql,val)
+        result = mycursor.fetchall()
+    except:
+        os.startfile(__file__)
+        os._exit(1)
 
     user = bot.get_user(int(userID))
     if result == [] and user.bot == False:
