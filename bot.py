@@ -719,11 +719,11 @@ async def on_member_leave(member):
         except:
             pass
     channel = discord.utils.get(bot.get_all_channels(), id=byeChannel)
-    await channel.send(f"{member.mention} opuścił nas :( ")
+    await channel.send(f"{member.mention} opuścił(a) nas :( ")
 @bot.event
 async def on_member_remove(member):
     channel = discord.utils.get(bot.get_all_channels(), id=byeChannel)
-    await channel.send(f"{member.mention} opuścił nas :( ")
+    await channel.send(f"{member.mention} opuścił(a) nas :( ")
     guild = member.guild
     async for entry in guild.audit_logs(limit=1, action=discord.AuditLogAction.kick):
         if entry.target == member:
