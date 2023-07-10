@@ -14,6 +14,11 @@ import string
 from captcha.image import ImageCaptcha
 import os
 import math
+from craiyon import Craiyon, craiyon_utils
+from io import BytesIO
+import cv2
+from PIL import Image
+import tempfile
 # ==============================================================================================
 # useful constants
 
@@ -66,7 +71,8 @@ mydb = mysql.connector.connect(
   host=databaseHost,
   port=databasePort,
   user=databaseUser,
-  password=databasePassword
+  password=databasePassword,
+  connection_timeout=1000
 )
 mycursor = mydb.cursor()
 
@@ -162,10 +168,15 @@ async def dajLevele(userID, beforeLevel):
         await channel.send(f"{user.mention}")
         await channel.send(embed=embed)
 async def dodajXP(ilosc,userID):
+    global mycursor
+    global mydb
     sql= "SELECT * FROM levele WHERE discordId=%s"
     val =[(userID)]
+    
     mycursor.execute(sql,val)
     result = mycursor.fetchall()
+    
+
     user = bot.get_user(int(userID))
     if result == [] and user.bot == False:
         beforeLevel=0
@@ -355,7 +366,7 @@ async def checkMessage(message):
 @bot.event
 async def on_ready():
     await tree.sync(guild=discord.Object(id=ServerID))
-    await bot.change_presence(status=discord.Status.online, activity=discord.Game('Miłego dnia :)'))
+    await bot.change_presence(status=discord.Status.online, activity=discord.Game('Problemy techniczne...'))
     print("I'm ready!")
     await resetPoints()
 
@@ -1026,8 +1037,10 @@ async def ranking(interaction: discord.Interaction):
         user = bot.get_user(int(result[0]))
         embed.add_field(name=f"**{licznik}. {user}**", value=f"Punkty doświadczenia: {result[1]}\nPoziom: {result[2]}",inline=False)
         licznik+=1
+    await interaction.channel.send("Utaciliśmy bazę danych (chwilowo). Postaramy się odzyskać ją. Przepraszamy za utrudnienia.")
     await interaction.response.send_message(embed=embed)
 @tree.command(name = "moj-poziom", description = "Pokazuje twój poziom", guild=discord.Object(id=ServerID)) 
+
 async def mojPoziom(interaction: discord.Interaction):
     sql="SELECT * FROM levele WHERE discordId=%s"
     val=[(interaction.user.id)]
@@ -1041,5 +1054,40 @@ async def mojPoziom(interaction: discord.Interaction):
     else:
         embed = discord.Embed(colour=discord.Colour.red(),title=f"{interaction.user.display_name}, nie posiadasz punktów doświadczeń! Pisz dalej :)")
         await interaction.response.send_message(embed=embed)
+
+
+
+#@tree.command(name = "generuj-tapete", description = "Pokazuje twój poziom", guild=discord.Object(id=ServerID)) 
+#@discord.app_commands.choices(standard=[
+ #       discord.app_commands.Choice(name="16:9", value="16:9"),
+  #      discord.app_commands.Choice(name="16:10", value="16:10"),
+   #     discord.app_commands.Choice(name="4:3", value="4:3")
+    #    ])
+#@discord.app_commands.choices(styl=[
+ #       discord.app_commands.Choice(name="Sztuka", value="art"),
+  #      discord.app_commands.Choice(name="Rysunek", value="drawing"),
+   #     discord.app_commands.Choice(name="Zdjęcie", value="photo"),
+    #    discord.app_commands.Choice(name="Bez stylu", value="none")
+     #   ])
+#async def genWallpaper(interaction: discord.Interaction,motyw: str, standard: discord.app_commands.Choice[str]="16:9", styl: discord.app_commands.Choice[str]="art"):
+ #   pass
+  #  await interaction.response.defer()
+   # await interaction.channel.send("Trwa generowanie twojej tapety. Potrwa to około minutę.")
+    #generated_images = await generator.async_generate(motyw,model_type=styl)
+    #b64_list = await craiyon_utils.async_encode_base64(generated_images.images)
+    #images1 = []
+    #for index, image in enumerate(b64_list): # Loop through b64_list, keeping track of the index
+     #   img_bytes = BytesIO(base64.b64decode(image)) # Decode the image and store it as a bytes object
+      #  imageToResize = Image.open(img_bytes)
+       # target_width, target_height = 3840, 2160
+        #resized_image = imageToResize.resize((target_width, target_height), Image.BICUBIC)
+        #with tempfile.NamedTemporaryFile(delete=False) as temp_file:
+         #   resized_image.save(temp_file.name, format='JPEG')
+          #  temp_file.close()
+        #image = discord.File(temp_file.name)
+        #image.filename = f"result{index}.png"
+        #images1.append(image)
+    #await interaction.followup.send(files=images1)
 load()
+generator = Craiyon()
 bot.run(TOKEN)
