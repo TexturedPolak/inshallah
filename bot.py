@@ -1064,8 +1064,15 @@ async def mojPoziom(interaction: discord.Interaction):
         embed = discord.Embed(colour=discord.Colour.red(),title=f"{interaction.user.display_name}, nie posiadasz punktów doświadczeń! Pisz dalej :)")
         await interaction.response.send_message(embed=embed)
 
-
-
+@tree.command(name = "embed", description = "Wysyła wiadomość jako embed na wybranym kanale.", guild=discord.Object(id=ServerID)) 
+@discord.app_commands.checks.has_role(AdminRoleID)
+async def sendEmbed(interaction: discord.Interaction, tytul: str, tresc: str, kanal: discord.TextChannel):
+    embed = discord.Embed(colour=discord.Colour.blue(),title=tytul,description=tresc)
+    await kanal.send(embed=embed)
+    await interaction.response.send_message("Wysłano :)")
+@sendEmbed.error
+async def errorSendEmbed(interaction,x):
+    await interaction.response.send_message("Brak uprawnień.")
 #@tree.command(name = "generuj-tapete", description = "Pokazuje twój poziom", guild=discord.Object(id=ServerID)) 
 #@discord.app_commands.choices(standard=[
  #       discord.app_commands.Choice(name="16:9", value="16:9"),
