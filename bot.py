@@ -505,7 +505,7 @@ async def on_member_join(member):
                 role = discord.utils.get(channel.guild.roles, id=VerificationRoleId)
                 await member.add_roles(role)
                 welChannel = discord.utils.get(bot.get_all_channels(), id=welcomeChannel)
-                await welChannel.send(f"{member.mention}, witamy na serwerze! :partying_face:")
+                await welChannel.send(f"Osoba o nicku {member.mention}, właśnie prześlizgnęła się na nasz serwer. Witamy :wave::partying_face:")
                 stopZegar=True
             else:
                 logiWeryfikacja+="**Pytanie 5**\n"+pytanie[0][0]+"\nOdpowiedź: `"+odp+"`\nPoprawna odpowiedź: "+poprawna+"\n\n**Weryfikacja nieudana!**"
@@ -728,11 +728,11 @@ async def on_member_leave(member):
         except:
             pass
     channel = discord.utils.get(bot.get_all_channels(), id=byeChannel)
-    await channel.send(f"{member.mention} opuścił(a) nas :( ")
+    await channel.send(f"{member} opuścił(a) nasz serwer. :sob:")
 @bot.event
 async def on_member_remove(member):
     channel = discord.utils.get(bot.get_all_channels(), id=byeChannel)
-    await channel.send(f"{member.mention} opuścił(a) nas :( ")
+    await channel.send(f"{member} opuścił(a) nasz serwer. :sob:")
     guild = member.guild
     async for entry in guild.audit_logs(limit=1, action=discord.AuditLogAction.kick):
         if entry.target == member:
@@ -793,7 +793,13 @@ async def on_message(message):
         if message.author.id == i.get("userId"):
                 i["timeToKick"] = Account_IdleTime
     if message.content.lower() == "siema":
-        await message.channel.send("No siema :)", reference=message)
+        await message.channel.send("No siema :grinning:", reference=message)
+    if message.content.lower() == "hej":
+        await message.channel.send("No hej :grinning:", reference=message)
+    if message.content.lower() == "hejka":
+        await message.channel.send("No hejka :grinning:", reference=message)
+    if message.content.lower() == "witam":
+        await message.channel.send("Witam, witam :grinning:", reference=message)
     if DoAutomodMessages:
         await checkMessage(message)
     #try:
