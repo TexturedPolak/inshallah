@@ -794,12 +794,14 @@ async def on_message(message):
                 i["timeToKick"] = Account_IdleTime
     if message.content.lower() == "siema":
         await message.channel.send("No siema :grinning:", reference=message)
-    if message.content.lower() == "hej":
+    elif message.content.lower() == "hej":
         await message.channel.send("No hej :grinning:", reference=message)
-    if message.content.lower() == "hejka":
+    elif message.content.lower() == "hejka":
         await message.channel.send("No hejka :grinning:", reference=message)
-    if message.content.lower() == "witam":
+    elif message.content.lower() == "witam":
         await message.channel.send("Witam, witam :grinning:", reference=message)
+    elif message.content.lower() == "cześć":
+        await message.channel.send("Cześć, cześć :grinning:", reference=message)
     if DoAutomodMessages:
         await checkMessage(message)
     #try:
