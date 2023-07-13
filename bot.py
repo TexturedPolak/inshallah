@@ -14,10 +14,10 @@ import string
 from captcha.image import ImageCaptcha
 import os
 import math
-#from craiyon import Craiyon, craiyon_utils
-#from io import BytesIO
-#import cv2
-#from PIL import Image
+from craiyon import Craiyon, craiyon_utils
+from io import BytesIO
+from pydrive.auth import GoogleAuth
+from pydrive.drive import GoogleDrive
 #import tempfile
 # ==============================================================================================
 # useful constants
@@ -66,6 +66,7 @@ verificationCategory=config.get("verificationCategory")
 levelsChannel=config.get("levelsChannel")
 welcomeChannel=config.get("welcomeChannel")
 byeChannel=config.get("byeChannel")
+BackupFolderGDID = config.get("BackupFolderGDID")
 mydb = mysql.connector.connect(
   database=databaseName,  
   host=databaseHost,
@@ -165,7 +166,6 @@ async def dajLevele(userID, beforeLevel):
         channel = discord.utils.get(bot.get_all_channels(), id=levelsChannel)
         user = bot.get_user(int(userID))
         embed = discord.Embed(colour=discord.Colour.green(),title=f"{user.display_name} zdobył(a) {level} poziom! Gratulujemy :grin:")
-        await channel.send(f"{user.mention}")
         await channel.send(embed=embed)
 async def dodajXP(ilosc,userID):
     global mycursor
@@ -261,6 +261,35 @@ async def resetPoints():
             plik = open("time.json","w+")
             plik.write(str(time))
             plik.close()
+            def backup():
+                dzisiejszadata=datetime.datetime.today().date()
+                timez=datetime.datetime.now().time()
+                timez = timez.replace(microsecond=0)
+                naglowek=str(dzisiejszadata)+"*"+str(timez)
+                os.system("mkdir backup"+naglowek)
+                os.system("cp bot.py backup"+naglowek+"/bot.py")
+                os.system("cp bans.json backup"+naglowek+"/bans.json")
+                os.system("cp database.json backup"+naglowek+"/database.json")
+                os.system("cp databaseClock.json backup"+naglowek+"/databaseClock.json")
+                os.system("cp standby.py backup"+naglowek+"/standby.py")
+                os.system("cp time.json backup"+naglowek+"/time.json")
+                os.system("cp requirements.txt backup"+naglowek+"/requirements.txt")
+                remoteFolderMetaData = {
+                    'title': str(naglowek),
+                    'parents': [{"id":BackupFolderGDID}],
+                    'mimeType': 'application/vnd.google-apps.folder'
+                }
+                remoteFolder = drive.CreateFile(remoteFolderMetaData)
+                remoteFolder.Upload()
+                remoteFolderId = remoteFolder['id']
+                filesList=os.listdir("backup"+naglowek+"/")
+                for file in filesList:
+                    template = drive.CreateFile({"parents": [{"id": remoteFolderId}]})
+                    template.SetContentFile(file)
+                    template.Upload()
+                os.system("rm -r backup"+naglowek)
+            backup()
+            print("Wykonano backup")
             print("Restart")
             await bot.change_presence(status=discord.Status.online, activity=discord.Game('Restartowanie!'))
             os._exit(1)
@@ -1054,7 +1083,6 @@ async def ranking(interaction: discord.Interaction):
         user = bot.get_user(int(result[0]))
         embed.add_field(name=f"**{licznik}. {user}**", value=f"Punkty doświadczenia: {result[1]}\nPoziom: {result[2]}",inline=False)
         licznik+=1
-    await interaction.channel.send("Utaciliśmy bazę danych (chwilowo). Postaramy się odzyskać ją. Przepraszamy za utrudnienia.")
     await interaction.response.send_message(embed=embed)
 @tree.command(name = "moj-poziom", description = "Pokazuje twój poziom", guild=discord.Object(id=ServerID)) 
 
@@ -1081,37 +1109,34 @@ async def sendEmbed(interaction: discord.Interaction, tytul: str, tresc: str, ka
 @sendEmbed.error
 async def errorSendEmbed(interaction,x):
     await interaction.response.send_message("Brak uprawnień.")
-#@tree.command(name = "generuj-tapete", description = "Pokazuje twój poziom", guild=discord.Object(id=ServerID)) 
+@tree.command(name = "generuj-obrazek", description = "AI wygeneruje 9 obrazków.", guild=discord.Object(id=ServerID)) 
 #@discord.app_commands.choices(standard=[
  #       discord.app_commands.Choice(name="16:9", value="16:9"),
   #      discord.app_commands.Choice(name="16:10", value="16:10"),
    #     discord.app_commands.Choice(name="4:3", value="4:3")
     #    ])
-#@discord.app_commands.choices(styl=[
- #       discord.app_commands.Choice(name="Sztuka", value="art"),
-  #      discord.app_commands.Choice(name="Rysunek", value="drawing"),
-   #     discord.app_commands.Choice(name="Zdjęcie", value="photo"),
-    #    discord.app_commands.Choice(name="Bez stylu", value="none")
-     #   ])
-#async def genWallpaper(interaction: discord.Interaction,motyw: str, standard: discord.app_commands.Choice[str]="16:9", styl: discord.app_commands.Choice[str]="art"):
- #   pass
-  #  await interaction.response.defer()
-   # await interaction.channel.send("Trwa generowanie twojej tapety. Potrwa to około minutę.")
-    #generated_images = await generator.async_generate(motyw,model_type=styl)
-    #b64_list = await craiyon_utils.async_encode_base64(generated_images.images)
-    #images1 = []
-    #for index, image in enumerate(b64_list): # Loop through b64_list, keeping track of the index
-     #   img_bytes = BytesIO(base64.b64decode(image)) # Decode the image and store it as a bytes object
-      #  imageToResize = Image.open(img_bytes)
-       # target_width, target_height = 3840, 2160
-        #resized_image = imageToResize.resize((target_width, target_height), Image.BICUBIC)
-        #with tempfile.NamedTemporaryFile(delete=False) as temp_file:
-         #   resized_image.save(temp_file.name, format='JPEG')
-          #  temp_file.close()
-        #image = discord.File(temp_file.name)
-        #image.filename = f"result{index}.png"
-        #images1.append(image)
-    #await interaction.followup.send(files=images1)
+@discord.app_commands.choices(styl=[
+        discord.app_commands.Choice(name="Sztuka", value="art"),
+        discord.app_commands.Choice(name="Rysunek", value="drawing"),
+        discord.app_commands.Choice(name="Zdjęcie", value="photo"),
+        discord.app_commands.Choice(name="Bez stylu", value="none")
+        ])
+async def genWallpaper(interaction: discord.Interaction,motyw: str, styl: discord.app_commands.Choice[str]="art"):
+    await interaction.response.defer()
+    wiad = await interaction.channel.send("Trwa generowanie twojego zestawu obrazków. Potrwa to około minutę.")
+    generated_images = await generator.async_generate(motyw,model_type=styl)
+    b64_list = await craiyon_utils.async_encode_base64(generated_images.images)
+    images1 = []
+    for index, image in enumerate(b64_list): # Loop through b64_list, keeping track of the index
+        img_bytes = BytesIO(base64.b64decode(image)) # Decode the image and store it as a bytes object
+        image = discord.File(img_bytes)
+        image.filename = f"result{index}.png"
+        images1.append(image)
+    await interaction.followup.send(files=images1)
+    await wiad.delete()
 load()
-#generator = Craiyon()
+generator = Craiyon()
+gauth = GoogleAuth()
+gauth.LoadCredentialsFile("gauth.json")
+drive = GoogleDrive(gauth)
 bot.run(TOKEN)
