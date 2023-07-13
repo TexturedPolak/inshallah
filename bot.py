@@ -278,7 +278,7 @@ async def resetPoints():
                     sql= "SELECT * FROM levele"
                     mycursor.execute(sql)
                     results = mycursor.fetchall()
-                    plik = open("backup"+naglowek+"/leveleBackup.json","w+")
+                    plik = open("backup"+naglowek+"/leveleBackup.json","xw")
                     plik.write(json.dumps(results))
                     plik.close()
                 except:
@@ -1147,5 +1147,9 @@ load()
 generator = Craiyon()
 gauth = GoogleAuth()
 gauth.LoadCredentialsFile("gauth.json")
+if gauth.access_token_expired:
+    gauth.Refresh()
+else:
+    gauth.Authorize()
 drive = GoogleDrive(gauth)
 bot.run(TOKEN)
