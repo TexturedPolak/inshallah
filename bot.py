@@ -1125,11 +1125,6 @@ async def sendEmbed(interaction: discord.Interaction, tytul: str, tresc: str, ka
 async def errorSendEmbed(interaction,x):
     await interaction.response.send_message("Brak uprawnień.")
 @tree.command(name = "generuj-obrazek", description = "AI wygeneruje 9 obrazków.", guild=discord.Object(id=ServerID)) 
-#@discord.app_commands.choices(standard=[
- #       discord.app_commands.Choice(name="16:9", value="16:9"),
-  #      discord.app_commands.Choice(name="16:10", value="16:10"),
-   #     discord.app_commands.Choice(name="4:3", value="4:3")
-    #    ])
 @discord.app_commands.choices(styl=[
         discord.app_commands.Choice(name="Sztuka", value="art"),
         discord.app_commands.Choice(name="Rysunek", value="drawing"),
@@ -1139,7 +1134,10 @@ async def errorSendEmbed(interaction,x):
 async def genWallpaper(interaction: discord.Interaction,motyw: str, styl: discord.app_commands.Choice[str]="art"):
     await interaction.response.defer()
     wiad = await interaction.channel.send("Trwa generowanie twojego zestawu obrazków. Potrwa to około minutę.")
-    generated_images = await generator.async_generate(motyw,model_type=styl)
+    if type(styl)!=str:
+        generated_images = await generator.async_generate(motyw,model_type=styl.value)
+    else:
+        generated_images = await generator.async_generate(motyw,model_type=styl)
     b64_list = await craiyon_utils.async_encode_base64(generated_images.images)
     images1 = []
     for index, image in enumerate(b64_list): # Loop through b64_list, keeping track of the index
