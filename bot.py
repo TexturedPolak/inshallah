@@ -274,6 +274,15 @@ async def resetPoints():
                 os.system("cp standby.py backup"+naglowek+"/standby.py")
                 os.system("cp time.json backup"+naglowek+"/time.json")
                 os.system("cp requirements.txt backup"+naglowek+"/requirements.txt")
+                try:
+                    sql= "SELECT * FROM levele"
+                    mycursor.execute(sql)
+                    results = mycursor.fetchall()
+                    plik = open("backup"+naglowek+"/leveleBackup.json","w+")
+                    plik.write(json.dumps(results))
+                    plik.close()
+                except:
+                    print("Błąd bazy danych. Pomijam.")
                 remoteFolderMetaData = {
                     'title': str(naglowek),
                     'parents': [{"id":BackupFolderGDID}],
