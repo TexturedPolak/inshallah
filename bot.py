@@ -278,9 +278,13 @@ async def resetPoints():
                     sql= "SELECT * FROM levele"
                     mycursor.execute(sql)
                     results = mycursor.fetchall()
-                    plik = open("backup"+naglowek+"/leveleBackup.json","xw")
+                    plik = open("leveleBackup.json","x")
+                    plik.close()
+                    plik = open("leveleBackup.json","w")
                     plik.write(json.dumps(results))
                     plik.close()
+                    os.system("cp leveleBackup.json backup"+naglowek+"/leveleBackup.json")
+                    os.system("rm leveleBackup.json")
                 except:
                     print("Błąd bazy danych. Pomijam.")
                 remoteFolderMetaData = {
@@ -292,10 +296,12 @@ async def resetPoints():
                 remoteFolder.Upload()
                 remoteFolderId = remoteFolder['id']
                 filesList=os.listdir("backup"+naglowek+"/")
+                os.chdir("backup"+naglowek)
                 for file in filesList:
                     template = drive.CreateFile({"parents": [{"id": remoteFolderId}]})
                     template.SetContentFile(file)
                     template.Upload()
+                os.chdir("..")
                 os.system("rm -r backup"+naglowek)
             backup()
             print("Wykonano backup")
