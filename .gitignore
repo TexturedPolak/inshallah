@@ -4,6 +4,5 @@ trash/
 env/
 *.xml
 *.iml
-baza.py
 *.png
-in-service.py
+*.py

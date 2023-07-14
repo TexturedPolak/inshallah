@@ -261,50 +261,6 @@ async def resetPoints():
             plik = open("time.json","w+")
             plik.write(str(time))
             plik.close()
-            def backup():
-                dzisiejszadata=datetime.datetime.today().date()
-                timez=datetime.datetime.now().time()
-                timez = timez.replace(microsecond=0)
-                naglowek=str(dzisiejszadata)+"*"+str(timez)
-                os.system("mkdir backup"+naglowek)
-                os.system("cp bot.py backup"+naglowek+"/bot.py")
-                os.system("cp bans.json backup"+naglowek+"/bans.json")
-                os.system("cp database.json backup"+naglowek+"/database.json")
-                os.system("cp databaseClock.json backup"+naglowek+"/databaseClock.json")
-                os.system("cp standby.py backup"+naglowek+"/standby.py")
-                os.system("cp time.json backup"+naglowek+"/time.json")
-                os.system("cp requirements.txt backup"+naglowek+"/requirements.txt")
-                try:
-                    sql= "SELECT * FROM levele"
-                    mycursor.execute(sql)
-                    results = mycursor.fetchall()
-                    plik = open("leveleBackup.json","x")
-                    plik.close()
-                    plik = open("leveleBackup.json","w")
-                    plik.write(json.dumps(results))
-                    plik.close()
-                    os.system("cp leveleBackup.json backup"+naglowek+"/leveleBackup.json")
-                    os.system("rm leveleBackup.json")
-                except:
-                    print("Błąd bazy danych. Pomijam.")
-                remoteFolderMetaData = {
-                    'title': str(naglowek),
-                    'parents': [{"id":BackupFolderGDID}],
-                    'mimeType': 'application/vnd.google-apps.folder'
-                }
-                remoteFolder = drive.CreateFile(remoteFolderMetaData)
-                remoteFolder.Upload()
-                remoteFolderId = remoteFolder['id']
-                filesList=os.listdir("backup"+naglowek+"/")
-                os.chdir("backup"+naglowek)
-                for file in filesList:
-                    template = drive.CreateFile({"parents": [{"id": remoteFolderId}]})
-                    template.SetContentFile(file)
-                    template.Upload()
-                os.chdir("..")
-                os.system("rm -r backup"+naglowek)
-            backup()
-            print("Wykonano backup")
             print("Restart")
             await bot.change_presence(status=discord.Status.online, activity=discord.Game('Restartowanie!'))
             os._exit(1)
@@ -454,7 +410,7 @@ async def on_member_join(member):
     nameChannel+=str(member)
     category = discord.utils.get(guild.categories, id=verificationCategory)
     channel = await guild.create_text_channel(nameChannel, overwrites=overwrites, category=category)
-    embed = discord.Embed(colour=discord.Colour.blue(),title=f"Weryfikacja",description="Prosimy Ciebie abyś odpowiedział(a) na 5 pytań. Przed rozpoczęciem prosimy Cię o dokładne przeczytanie regulaminu. **Proces weryfikacji może być przerywany paru sekundowymi przerwami (max 5 sekund), w oczekiwaniu na wygenerowanie pytania.**")
+    embed = discord.Embed(colour=discord.Colour.blue(),title=f"Weryfikacja",description="Chcemy mieć czystą i bezpieczną społeczność. Osoby, które mają świeżo założone konta, będą automatycznie wyrzucane przez bota z serwera. Czas na przejście weryfikacji to 15 minut.\nProsimy Ciebie abyś odpowiedział(a) na 5 pytań. Przed rozpoczęciem prosimy Cię o dokładne przeczytanie regulaminu. **Proces weryfikacji może być przerywany paru sekundowymi przerwami (max 5 sekund), w oczekiwaniu na wygenerowanie pytania.**")
     await channel.send(f"{member.mention}")
     await channel.send(embed=embed)
     async def verificationWaiting():
@@ -836,16 +792,17 @@ async def on_message(message):
     for i in databaseClock:
         if message.author.id == i.get("userId"):
                 i["timeToKick"] = Account_IdleTime
-    if message.content.lower() == "siema":
-        await message.channel.send("No siema :grinning:", reference=message)
-    elif message.content.lower() == "hej":
-        await message.channel.send("No hej :grinning:", reference=message)
-    elif message.content.lower() == "hejka":
-        await message.channel.send("No hejka :grinning:", reference=message)
-    elif message.content.lower() == "witam":
-        await message.channel.send("Witam, witam :grinning:", reference=message)
-    elif message.content.lower() == "cześć":
-        await message.channel.send("Cześć, cześć :grinning:", reference=message)
+    if message.author.bot == False:
+        if "siema" in wiad.lower():
+            await message.channel.send("No siema :grinning:", reference=message)
+        elif "hej" in wiad.lower():
+            await message.channel.send("No hej :grinning:", reference=message)
+        elif "hejka" in wiad.lower():
+            await message.channel.send("No hejka :grinning:", reference=message)
+        elif "witam" in wiad.lower():
+            await message.channel.send("Witam, witam :grinning:", reference=message)
+        elif "cześć" in wiad.lower():
+            await message.channel.send("Cześć, cześć :grinning:", reference=message)
     if DoAutomodMessages:
         await checkMessage(message)
     #try:
@@ -856,8 +813,8 @@ async def on_message(message):
          #   await BumpChannel.send(f"Czas zrobić bump {role.mention}!")
     #except:
      #   pass
-    #if message.channel.id in PhothosChannels and len(message.attachments)==0 and message.author.bot == False:
-     #   await message.delete()
+    if message.channel.id in PhothosChannels and len(message.attachments)==0 and message.author.bot == False:
+        await message.delete()
 
 
 @bot.event
@@ -1147,7 +1104,49 @@ async def genWallpaper(interaction: discord.Interaction,motyw: str, styl: discor
         images1.append(image)
     await interaction.followup.send(files=images1)
     await wiad.delete()
-load()
+def backup():
+    dzisiejszadata=datetime.datetime.today().date()
+    timez=datetime.datetime.now().time()
+    timez = timez.replace(microsecond=0)
+    naglowek=str(dzisiejszadata)+"*"+str(timez)
+    os.system("mkdir backup"+naglowek)
+    os.system("cp bot.py backup"+naglowek+"/bot.py")
+    os.system("cp bans.json backup"+naglowek+"/bans.json")
+    os.system("cp database.json backup"+naglowek+"/database.json")
+    os.system("cp databaseClock.json backup"+naglowek+"/databaseClock.json")
+    os.system("cp standby.py backup"+naglowek+"/standby.py")
+    os.system("cp time.json backup"+naglowek+"/time.json")
+    os.system("cp requirements.txt backup"+naglowek+"/requirements.txt")
+    try:
+        sql= "SELECT * FROM levele"
+        mycursor.execute(sql)
+        results = mycursor.fetchall()
+        plik = open("leveleBackup.json","x")
+        plik.close()
+        plik = open("leveleBackup.json","w")
+        plik.write(json.dumps(results))
+        plik.close()
+        os.system("cp leveleBackup.json backup"+naglowek+"/leveleBackup.json")
+        os.system("rm leveleBackup.json")
+    except:
+        print("Błąd bazy danych. Pomijam.")
+    remoteFolderMetaData = {
+    'title': str(naglowek),
+    'parents': [{"id":BackupFolderGDID}],
+    'mimeType': 'application/vnd.google-apps.folder'
+    }
+    remoteFolder = drive.CreateFile(remoteFolderMetaData)
+    remoteFolder.Upload()
+    remoteFolderId = remoteFolder['id']
+    filesList=os.listdir("backup"+naglowek+"/")
+    os.chdir("backup"+naglowek)
+    for file in filesList:
+        template = drive.CreateFile({"parents": [{"id": remoteFolderId}]})
+        template.SetContentFile(file)
+        template.Upload()
+    os.chdir("..")
+    os.system("rm -r backup"+naglowek)
+    print("Wykonano backup")
 generator = Craiyon()
 gauth = GoogleAuth()
 gauth.LoadCredentialsFile("gauth.json")
@@ -1156,4 +1155,7 @@ if gauth.access_token_expired:
 else:
     gauth.Authorize()
 drive = GoogleDrive(gauth)
+backup()
+load()
+
 bot.run(TOKEN)
