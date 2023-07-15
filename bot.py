@@ -8,7 +8,7 @@ import datetime
 import requests
 from cryptography.fernet import Fernet
 import base64
-import mysql.connector
+import psycopg2
 import random
 import string
 from captcha.image import ImageCaptcha
@@ -67,13 +67,12 @@ levelsChannel=config.get("levelsChannel")
 welcomeChannel=config.get("welcomeChannel")
 byeChannel=config.get("byeChannel")
 BackupFolderGDID = config.get("BackupFolderGDID")
-mydb = mysql.connector.connect(
+mydb = psycopg2.connect(
   database=databaseName,  
   host=databaseHost,
   port=databasePort,
   user=databaseUser,
-  password=databasePassword,
-  connection_timeout=1000
+  password=databasePassword
 )
 mycursor = mydb.cursor()
 
@@ -148,17 +147,17 @@ def leveleNapraw():
     results = mycursor.fetchall()
     for result in results:
         level=int(math.sqrt(result[1]/10))
-        sql = "UPDATE levele SET level = %s WHERE discordId=%s"
+        sql = "UPDATE levele SET level = %s WHERE discordid=%s"
         val=[level,result[0]]
         mycursor.execute(sql,val)
         mydb.commit()
 async def dajLevele(userID, beforeLevel):
-    sql= "SELECT xp FROM levele WHERE discordId=%s"
+    sql= "SELECT xp FROM levele WHERE discordid=%s"
     val =[(userID)]
     mycursor.execute(sql,val)
     result = mycursor.fetchall()
     level=int(math.sqrt(result[0][0]/10))
-    sql = "UPDATE levele SET level = %s WHERE discordId=%s"
+    sql = "UPDATE levele SET level = %s WHERE discordid=%s"
     val=[level,userID]
     mycursor.execute(sql,val)
     mydb.commit()
@@ -170,15 +169,14 @@ async def dajLevele(userID, beforeLevel):
 async def dodajXP(ilosc,userID):
     global mycursor
     global mydb
-    sql= "SELECT * FROM levele WHERE discordId=%s"
-    val =[(userID)]
-    try:
-        mycursor.execute(sql,val)
-        result = mycursor.fetchall()
-    except:
-        print("Restart")
-        await bot.change_presence(status=discord.Status.online, activity=discord.Game('Restartowanie!'))
-        os._exit(1)
+    sql= "SELECT * FROM levele WHERE discordid=%s"
+    val =(userID,)
+    mycursor.execute(sql,val)
+    result = mycursor.fetchall()
+    #except:
+     #   print("Restart")
+      #  await bot.change_presence(status=discord.Status.online, activity=discord.Game('Restartowanie!'))
+       # os._exit(1)
 
     user = bot.get_user(int(userID))
     if result == [] and user.bot == False:
@@ -189,7 +187,7 @@ async def dodajXP(ilosc,userID):
         mydb.commit()
     elif user.bot == False:
         beforeLevel=result[0][2]
-        sql = "UPDATE levele SET xp = xp+%s WHERE discordId=%s"
+        sql = "UPDATE levele SET xp = xp+%s WHERE discordid=%s"
         val=[ilosc,userID]
         mycursor.execute(sql,val)
         mydb.commit()
@@ -1059,8 +1057,8 @@ async def ranking(interaction: discord.Interaction):
 @tree.command(name = "moj-poziom", description = "Pokazuje twój poziom", guild=discord.Object(id=ServerID)) 
 
 async def mojPoziom(interaction: discord.Interaction):
-    sql="SELECT * FROM levele WHERE discordId=%s"
-    val=[(interaction.user.id)]
+    sql="SELECT * FROM levele WHERE discordid=%s"
+    val=[(str(interaction.user.id))]
     mycursor.execute(sql,val)
     myresults = mycursor.fetchall()
     if myresults!=[]:
