@@ -259,9 +259,9 @@ async def resetPoints():
             plik = open("time.json","w+")
             plik.write(str(time))
             plik.close()
-            print("Restart")
-            await bot.change_presence(status=discord.Status.online, activity=discord.Game('Restartowanie!'))
-            os._exit(1)
+            #print("Restart")
+            #await bot.change_presence(status=discord.Status.online, activity=discord.Game('Restartowanie!'))
+            #os._exit(1)
         plik = open("time.json","w+")
         plik.write(str(time))
         plik.close()
@@ -803,14 +803,14 @@ async def on_message(message):
             await message.channel.send("Cześć, cześć :grinning:", reference=message)
     if DoAutomodMessages:
         await checkMessage(message)
-    #try:
-     #   if message.interaction.name == "bump":
-      #      await asyncio.sleep(7200)
-       #     BumpChannel= bot.get_channel(BumpChannelID)
-        #    role = discord.utils.get(message.guild.roles, id=AdminRoleID)
-         #   await BumpChannel.send(f"Czas zrobić bump {role.mention}!")
-    #except:
-     #   pass
+    try:
+        if message.interaction.name == "bump":
+            await asyncio.sleep(7200)
+            BumpChannel= bot.get_channel(BumpChannelID)
+            role = discord.utils.get(message.guild.roles, id=AdminRoleID)
+            await BumpChannel.send(f"Czas zrobić bump {role.mention}!")
+    except:
+       pass
     if message.channel.id in PhothosChannels and len(message.attachments)==0 and message.author.bot == False:
         await message.delete()
 
