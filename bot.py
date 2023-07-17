@@ -241,7 +241,7 @@ async def resetPoints():
                 guild=bot.get_guild(ServerID)
                 role = discord.utils.get(guild.roles, id=AdminRoleID)
                 await BumpChannel.send(f"Czas zrobić bump {role.mention}!")
-                bumpTime=7200
+                bumpTime=7199
                 plik = open("bumpTime.json","w+")
                 plik.write(str(bumpTime))
                 plik.close()
@@ -831,7 +831,7 @@ async def on_message(message):
         await checkMessage(message)
     try:
         if message.interaction.name == "bump":
-            bumpTime-=1
+            bumpTime==7199
             plik = open("bumpTime.json","w+")
             plik.write(str(bumpTime))
             plik.close()
