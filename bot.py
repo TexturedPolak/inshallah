@@ -223,11 +223,28 @@ async def check(member):
                 save()
 
 async def resetPoints():
+    global bumpTime
+    global AdminRoleID
+    global ServerID
     plik = open("time.json","r")
     time = int(plik.read())
     plik.close()
     while True:
         time-=1
+        if bumpTime!=7200:
+            bumpTime-=1
+            plik = open("bumpTime.json","w+")
+            plik.write(str(bumpTime))
+            plik.close()
+            if bumpTime<=0:
+                BumpChannel=bot.get_channel(BumpChannelID)
+                guild=bot.get_guild(ServerID)
+                role = discord.utils.get(guild.roles, id=AdminRoleID)
+                await BumpChannel.send(f"Czas zrobić bump {role.mention}!")
+                bumpTime=7200
+                plik = open("bumpTime.json","w+")
+                plik.write(str(bumpTime))
+                plik.close()
         save()
         await asyncio.sleep(1)
         for user in databaseClock:
@@ -259,9 +276,9 @@ async def resetPoints():
             plik = open("time.json","w+")
             plik.write(str(time))
             plik.close()
-            #print("Restart")
-            #await bot.change_presence(status=discord.Status.online, activity=discord.Game('Restartowanie!'))
-            #os._exit(1)
+            print("Restart")
+            await bot.change_presence(status=discord.Status.online, activity=discord.Game('Restartowanie!'))
+            os._exit(1)
         plik = open("time.json","w+")
         plik.write(str(time))
         plik.close()
@@ -269,6 +286,7 @@ async def resetPoints():
 
 def load():
     global database
+    global bumpTime
     try:
         plik = open("database.json","r")
     except:
@@ -285,6 +303,13 @@ def load():
         plik.write("[]")
         plik.close()
         load()
+    try:
+        plik = open("bumpTime.json","r")
+        bumpTime=int(plik.read())
+        plik.close()
+    except:
+        print("Brak pliku bumpTime.json")
+        os._exit(1)
     plik.close()
 
 def save():
@@ -782,6 +807,7 @@ async def on_member_ban(guild, member):
 async def on_message(message):
     global DoAutomodMessages
     global AdminRoleID
+    global bumpTime
     await dodajXP(int(len(message.content)/5),str(message.author.id))
     wiad = message.content
     for i in ["dzięki","dzieki","dzienki","thx","dziękuję","dziekuje","dziękuje"]:
@@ -805,10 +831,10 @@ async def on_message(message):
         await checkMessage(message)
     try:
         if message.interaction.name == "bump":
-            await asyncio.sleep(7200)
-            BumpChannel= bot.get_channel(BumpChannelID)
-            role = discord.utils.get(message.guild.roles, id=AdminRoleID)
-            await BumpChannel.send(f"Czas zrobić bump {role.mention}!")
+            bumpTime-=1
+            plik = open("bumpTime.json","w+")
+            plik.write(str(bumpTime))
+            plik.close()
     except:
        pass
     if message.channel.id in PhothosChannels and len(message.attachments)==0 and message.author.bot == False:
