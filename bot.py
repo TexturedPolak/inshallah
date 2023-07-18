@@ -18,6 +18,7 @@ from craiyon import Craiyon, craiyon_utils
 from io import BytesIO
 from pydrive.auth import GoogleAuth
 from pydrive.drive import GoogleDrive
+import psutil
 #import tempfile
 # ==============================================================================================
 # useful constants
@@ -831,7 +832,7 @@ async def on_message(message):
         await checkMessage(message)
     try:
         if message.interaction.name == "bump":
-            bumpTime==7199
+            bumpTime=7199
             plik = open("bumpTime.json","w+")
             plik.write(str(bumpTime))
             plik.close()
@@ -1128,6 +1129,13 @@ async def genWallpaper(interaction: discord.Interaction,motyw: str, styl: discor
         images1.append(image)
     await interaction.followup.send(files=images1)
     await wiad.delete()
+@tree.command(name = "ping", description = "Sprawdza opóżnienie bota i inne statystyki.", guild=discord.Object(id=ServerID)) 
+async def genWallpaper(interaction: discord.Interaction):
+    embed=discord.Embed(colour=discord.Colour.green(),title="PONG")
+    embed.add_field(name="Opóźnienie:", value=str(round (bot.latency * 1000))+" ms")
+    embed.add_field(name="Zużycie CPU:",value=str(psutil.cpu_percent(1))+"%")
+    embed.add_field(name="Zużycie Ramu:",value=str(psutil.virtual_memory()[2])+"%")
+    await interaction.response.send_message(embed=embed)
 def backup():
     dzisiejszadata=datetime.datetime.today().date()
     timez=datetime.datetime.now().time()
