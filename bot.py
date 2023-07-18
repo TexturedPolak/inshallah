@@ -693,17 +693,16 @@ async def on_member_join(member):
             await pytanieDwa(usun)
     embed = discord.Embed(colour=discord.Colour.blue(),title=f"Pytanie 1" ,description="Ile masz lat? Naciśnij guzik najbardziej pasujący do ciebie.")
     class MyView(discord.ui.View):
-        @discord.ui.button(label="13-15", row=0, style=discord.ButtonStyle.primary)
+        @discord.ui.button(label="16-18", row=0, style=discord.ButtonStyle.primary)
         async def first_button(self, button, interaction):
             nonlocal logiWeryfikacja
-            logiWeryfikacja+="**Pytanie 1**\nWiek\nOdpowiedź: `13-15`\n\n**Weryfikacja nieudana!**"
-            await sendLogiWeryfikacja()
-            good=False
+            logiWeryfikacja+="**Pytanie 1**\nWiek\nOdpowiedź: `16-18`\n\n"
+            good=True
             await pytanieJedenOdp(good)
-        @discord.ui.button(label="16-25", row=0, style=discord.ButtonStyle.primary)
+        @discord.ui.button(label="19-25", row=0, style=discord.ButtonStyle.primary)
         async def second_button(self, button, interaction):
             nonlocal logiWeryfikacja
-            logiWeryfikacja+="**Pytanie 1**\nWiek\nOdpowiedź: `16-25`\n\n"
+            logiWeryfikacja+="**Pytanie 1**\nWiek\nOdpowiedź: `19-25`\n\n"
             good=True
             await pytanieJedenOdp(good)
         @discord.ui.button(label="26-35", row=0, style=discord.ButtonStyle.primary)
