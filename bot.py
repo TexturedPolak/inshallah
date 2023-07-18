@@ -657,7 +657,7 @@ async def on_member_join(member):
         titleCaptcha = textCaptcha+".png"
         data = image.generate(textCaptcha)
         image.write(textCaptcha, titleCaptcha)
-        embed = discord.Embed(colour=discord.Colour.blue(),title=f"Pytanie 2",description="Prosimy abyś rozwiązał(a) to proste równanie (zawsze to będzie mnożenie). Zapisz wynik liczbowo np. `20`")
+        embed = discord.Embed(colour=discord.Colour.blue(),title=f"Pytanie 2",description="Prosimy abyś rozwiązał(a) to proste równanie (zawsze to będzie mnożenie). Zapisz wynik liczbowo np. `20`. **Wynik wpisz w polu wiadomości tekstowej i wyślij go do nas.**")
         if usun==True:
             usun=False
             await channel.purge(limit=2)
