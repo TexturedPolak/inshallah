@@ -68,6 +68,7 @@ levelsChannel=config.get("levelsChannel")
 welcomeChannel=config.get("welcomeChannel")
 byeChannel=config.get("byeChannel")
 BackupFolderGDID = config.get("BackupFolderGDID")
+embedPlus=""
 mydb = psycopg2.connect(
   database=databaseName,  
   host=databaseHost,
@@ -804,6 +805,27 @@ async def on_member_ban(guild, member):
         except:
             pass
 @bot.event
+async def on_raw_reaction_add(Reaction):
+    plik = open("role.json","r")
+    bazaRoli = json.loads(plik.read())
+    plik.close()
+    if Reaction.emoji.is_custom_emoji():
+        emotka = f"<:{Reaction.emoji.name}:{Reaction.emoji.id}>"
+    else:
+        emotka = Reaction.emoji.name
+    try:
+        for i in bazaRoli:
+            if i[str(Reaction.message_id)]!=None:
+                for y in i[str(Reaction.message_id)]:  
+                    if emotka==y.get("emoji"):
+                        role = discord.utils.get(Reaction.member.guild.roles, id=y.get("role"))
+                        if role in Reaction.member.roles:
+                            await Reaction.member.remove_roles(role)
+                        else:
+                            await Reaction.member.add_roles(role)
+    except KeyError:
+        pass
+@bot.event
 async def on_message(message):
     global DoAutomodMessages
     global AdminRoleID
@@ -1105,6 +1127,29 @@ async def sendEmbed(interaction: discord.Interaction, tytul: str, tresc: str, ka
 @sendEmbed.error
 async def errorSendEmbed(interaction,x):
     await interaction.response.send_message("Brak uprawnień.")
+@tree.command(name = "embed_plus", description = "Wysyła wiadomość jako embed na wybranym kanale.", guild=discord.Object(id=ServerID)) 
+@discord.app_commands.checks.has_role(AdminRoleID)
+async def PlusEmbed(interaction: discord.Interaction, tresc: str):
+    global embedPlus
+    if tresc!="pusta linia":
+        embedPlus+=tresc+"\n"
+    elif tresc=="pusta linia":
+        embedPlus+="\n"
+    await interaction.response.send_message("Aby dodać kolejną linię użyj komendy ponownie. Aby utworzyć pustą linię zapisz w tresci `pusta linia`. Aby wysłać użyj komendy /wyslij_embed_plus .")
+@PlusEmbed.error
+async def errorSendEmbed(interaction,x):
+    await interaction.response.send_message("Brak uprawnień.")
+@tree.command(name = "wyslij_embed_plus", description = "Wysyła wiadomość jako embed na wybranym kanale.", guild=discord.Object(id=ServerID)) 
+@discord.app_commands.checks.has_role(AdminRoleID)
+async def sendPlusEmbed(interaction: discord.Interaction, tytul: str, kanal: discord.TextChannel):
+    global embedPlus
+    embed = discord.Embed(colour=discord.Colour.blue(),title=tytul,description=embedPlus)
+    await kanal.send(embed=embed)
+    embedPlus=""
+    await interaction.response.send_message("Wysłano :)")
+@sendPlusEmbed.error
+async def errorSendEmbed(interaction,x):
+    await interaction.response.send_message("Brak uprawnień.")
 @tree.command(name = "generuj-obrazek", description = "AI wygeneruje 9 obrazków.", guild=discord.Object(id=ServerID)) 
 @discord.app_commands.choices(styl=[
         discord.app_commands.Choice(name="Sztuka", value="art"),
@@ -1129,12 +1174,31 @@ async def genWallpaper(interaction: discord.Interaction,motyw: str, styl: discor
     await interaction.followup.send(files=images1)
     await wiad.delete()
 @tree.command(name = "ping", description = "Sprawdza opóżnienie bota i inne statystyki.", guild=discord.Object(id=ServerID)) 
-async def genWallpaper(interaction: discord.Interaction):
+async def ping(interaction: discord.Interaction):
     embed=discord.Embed(colour=discord.Colour.green(),title="PONG")
     embed.add_field(name="Opóźnienie:", value=str(round (bot.latency * 1000))+" ms")
     embed.add_field(name="Zużycie CPU:",value=str(psutil.cpu_percent(1))+"%")
     embed.add_field(name="Zużycie Ramu:",value=str(psutil.virtual_memory()[2])+"%")
     await interaction.response.send_message(embed=embed)
+@tree.command(name = "dodaj_reakcja_rola", description = "Odpowiada za dodawanie roli po naciśnięciu reakcji.", guild=discord.Object(id=ServerID)) 
+@discord.app_commands.checks.has_role(AdminRoleID)
+async def reactionRole(interaction: discord.Interaction, idwiadomosci: str, emotka: str, rola: discord.Role, kanal: discord.TextChannel):
+    plik = open("role.json","r")
+    bazaRoli = json.loads(plik.read())
+    plik.close()
+    isnieje=False
+    for i in bazaRoli:
+        if i.get(idwiadomosci)!=None:
+            isnieje=True
+            i[idwiadomosci].append({"emoji":emotka,"role":rola.id})
+    if isnieje==False:
+        bazaRoli.append({idwiadomosci:[{"emoji":emotka,"role":rola.id}]})
+    plik = open("role.json","w+")
+    plik.write(json.dumps(bazaRoli))
+    plik.close()
+    wiad = await kanal.fetch_message(int(idwiadomosci))
+    await wiad.add_reaction(emotka)
+    await interaction.response.send_message(f'Przypisano reakcję {emotka} do roli "{rola.name}"')
 def backup():
     dzisiejszadata=datetime.datetime.today().date()
     timez=datetime.datetime.now().time()
@@ -1186,7 +1250,7 @@ if gauth.access_token_expired:
 else:
     gauth.Authorize()
 drive = GoogleDrive(gauth)
-backup()
+#backup()
 load()
 
 bot.run(TOKEN)
