@@ -1199,6 +1199,9 @@ async def reactionRole(interaction: discord.Interaction, idwiadomosci: str, emot
     wiad = await kanal.fetch_message(int(idwiadomosci))
     await wiad.add_reaction(emotka)
     await interaction.response.send_message(f'Przypisano reakcję {emotka} do roli "{rola.name}"')
+@reactionRole.error
+async def errorReactionRole(interaction,x):
+    await interaction.response.send_message("Brak uprawnień.")
 def backup():
     dzisiejszadata=datetime.datetime.today().date()
     timez=datetime.datetime.now().time()
@@ -1250,7 +1253,7 @@ if gauth.access_token_expired:
 else:
     gauth.Authorize()
 drive = GoogleDrive(gauth)
-#backup()
+backup()
 load()
 
 bot.run(TOKEN)
