@@ -813,8 +813,8 @@ async def on_raw_reaction_add(Reaction):
         emotka = f"<:{Reaction.emoji.name}:{Reaction.emoji.id}>"
     else:
         emotka = Reaction.emoji.name
-    try:
-        for i in bazaRoli:
+    for i in bazaRoli:
+        try:
             if i[str(Reaction.message_id)]!=None:
                 for y in i[str(Reaction.message_id)]:  
                     if emotka==y.get("emoji"):
@@ -823,8 +823,8 @@ async def on_raw_reaction_add(Reaction):
                             await Reaction.member.remove_roles(role)
                         else:
                             await Reaction.member.add_roles(role)
-    except KeyError:
-        pass
+        except KeyError:
+            pass
 @bot.event
 async def on_message(message):
     global DoAutomodMessages
