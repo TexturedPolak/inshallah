@@ -816,13 +816,46 @@ async def on_raw_reaction_add(Reaction):
     for i in bazaRoli:
         try:
             if i[str(Reaction.message_id)]!=None:
-                for y in i[str(Reaction.message_id)]:  
+                limit=False
+                if i[str(Reaction.message_id)][0]==True:
+                    limit=True
+                    listaRoli=[]
+                    for y in i[str(Reaction.message_id)][1]:
+                        listaRoli.append(y.get("role"))
+                for x in i[str(Reaction.message_id)][1]: 
+                    if emotka==x.get("emoji"):
+                        role = discord.utils.get(Reaction.member.guild.roles, id=x.get("role"))
+                        if role not in Reaction.member.roles:
+                            if limit!=True:
+                                await Reaction.member.add_roles(role)
+                            elif limit==True:
+                                maJuz=False
+                                for rala in Reaction.member.roles:
+                                    if rala.id in listaRoli:
+                                        maJuz=True
+                                if maJuz==False:
+                                    await Reaction.member.add_roles(role)
+
+        except KeyError:
+            pass
+@bot.event
+async def on_raw_reaction_remove(Reaction):
+    member = discord.utils.get(bot.get_all_members(), id=Reaction.user_id)
+    plik = open("role.json","r")
+    bazaRoli = json.loads(plik.read())
+    plik.close()
+    if Reaction.emoji.is_custom_emoji():
+        emotka = f"<:{Reaction.emoji.name}:{Reaction.emoji.id}>"
+    else:
+        emotka = Reaction.emoji.name
+    for i in bazaRoli:
+        try:
+            if i[str(Reaction.message_id)]!=None:
+                for y in i[str(Reaction.message_id)][1]:  
                     if emotka==y.get("emoji"):
-                        role = discord.utils.get(Reaction.member.guild.roles, id=y.get("role"))
-                        if role in Reaction.member.roles:
-                            await Reaction.member.remove_roles(role)
-                        else:
-                            await Reaction.member.add_roles(role)
+                        role = discord.utils.get(member.guild.roles, id=y.get("role"))
+                        if role in member.roles:
+                            await member.remove_roles(role)
         except KeyError:
             pass
 @bot.event
@@ -1182,17 +1215,31 @@ async def ping(interaction: discord.Interaction):
     await interaction.response.send_message(embed=embed)
 @tree.command(name = "dodaj_reakcja_rola", description = "Odpowiada za dodawanie roli po naciśnięciu reakcji.", guild=discord.Object(id=ServerID)) 
 @discord.app_commands.checks.has_role(AdminRoleID)
-async def reactionRole(interaction: discord.Interaction, idwiadomosci: str, emotka: str, rola: discord.Role, kanal: discord.TextChannel):
+@discord.app_commands.choices(czylimit=[
+        discord.app_commands.Choice(name="TAK", value="TAK"),
+        discord.app_commands.Choice(name="NIE", value="NIE")
+        ])
+async def reactionRole(interaction: discord.Interaction, idwiadomosci: str, emotka: str, rola: discord.Role, kanal: discord.TextChannel,czylimit: discord.app_commands.Choice[str]="NIE"):
     plik = open("role.json","r")
     bazaRoli = json.loads(plik.read())
     plik.close()
+    try:
+        if czylimit.value=="NIE":
+            czyLimit="NIE"
+        elif czylimit.value=="TAK":
+            czyLimit="TAK"
+    except:
+        czyLimit="NIE"
     isnieje=False
     for i in bazaRoli:
         if i.get(idwiadomosci)!=None:
             isnieje=True
-            i[idwiadomosci].append({"emoji":emotka,"role":rola.id})
+            i[idwiadomosci][1].append({"emoji":emotka,"role":rola.id})
     if isnieje==False:
-        bazaRoli.append({idwiadomosci:[{"emoji":emotka,"role":rola.id}]})
+        if czyLimit=="NIE":
+            bazaRoli.append({idwiadomosci:[False,[{"emoji":emotka,"role":rola.id}]]})
+        elif czyLimit=="TAK":
+            bazaRoli.append({idwiadomosci:[True,[{"emoji":emotka,"role":rola.id}]]})
     plik = open("role.json","w+")
     plik.write(json.dumps(bazaRoli))
     plik.close()
