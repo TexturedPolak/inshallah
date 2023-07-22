@@ -68,6 +68,7 @@ levelsChannel=config.get("levelsChannel")
 welcomeChannel=config.get("welcomeChannel")
 byeChannel=config.get("byeChannel")
 BackupFolderGDID = config.get("BackupFolderGDID")
+MemesChannel=config.get("MemesChannel")
 embedPlus=""
 mydb = psycopg2.connect(
   database=databaseName,  
@@ -882,6 +883,8 @@ async def on_message(message):
             await message.channel.send("Witam, witam :grinning:", reference=message)
         elif "cześć" in wiad.lower():
             await message.channel.send("Cześć, cześć :grinning:", reference=message)
+        elif "Привет" in wiad.lower():
+            await message.channel.send("Ja nie gawarisz po ruski :(",reference=message)
     if DoAutomodMessages:
         await checkMessage(message)
     try:
@@ -894,7 +897,8 @@ async def on_message(message):
        pass
     if message.channel.id in PhothosChannels and len(message.attachments)==0 and message.author.bot == False:
         await message.delete()
-
+    if bot.user.mentioned_in(message) and message.channel.id==MemesChannel:
+        await message.channel.send(file=discord.File("Memes/"+str(random.randint(1,362))+".webp"),reference=message)
 
 @bot.event
 async def on_message_edit(before, after):
