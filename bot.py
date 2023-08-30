@@ -144,6 +144,9 @@ plik.close()
 plik = open("database.json","r")
 database = json.loads(plik.read())
 plik.close()
+plik = open("blacklist.json","r")
+blacklist = json.loads(plik.read())
+plik.close()
 def leveleNapraw():
     sql= "SELECT * FROM levele"
     mycursor.execute(sql)
@@ -263,8 +266,16 @@ async def resetPoints():
                 
                 guildDoClock = bot.get_guild(ServerID)
                 member = guildDoClock.get_member(user.get("userId"))
-                await member.send("Zostałeś wyrzucony za bardzo małą aktywność na serwerze.")
-                await check(member) 
+                try:
+                    await member.send("Zostałeś wyrzucony za bardzo małą aktywność na serwerze.")                   
+                except:
+                    pass
+                try:    
+                    await check(member) 
+                except:
+                    pass
+
+
                 databaseClock.remove({"userId":user.get("userId"),"timeToKick":user.get("timeToKick")})
             else:   
                 user["timeToKick"]-=1
@@ -407,6 +418,9 @@ async def on_ready():
 
 @bot.event
 async def on_member_join(member):
+    if member.id in blacklist:
+        member.kick(reason="id na blackliście")
+        return 0
     if time.time() - member.created_at.timestamp() < Account_YoungTime : 
         try:
             await member.send("Twoje konto zostało uznane za skrajnie podejrzane. Spróbuj ponownie kiedy indziej :)")
@@ -1297,14 +1311,14 @@ def backup():
     os.system("rm -r backup"+naglowek)
     print("Wykonano backup")
 generator = Craiyon()
-gauth = GoogleAuth()
-gauth.LoadCredentialsFile("gauth.json")
-if gauth.access_token_expired:
-    gauth.Refresh()
-else:
-    gauth.Authorize()
-drive = GoogleDrive(gauth)
-backup()
+#gauth = GoogleAuth()
+#gauth.LoadCredentialsFile("gauth.json")
+#if gauth.access_token_expired:
+#    gauth.Refresh()
+#else:
+#    gauth.Authorize()
+#drive = GoogleDrive(gauth)
+#backup()
 load()
 
 bot.run(TOKEN)
