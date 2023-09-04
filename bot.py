@@ -419,7 +419,7 @@ async def on_ready():
 @bot.event
 async def on_member_join(member):
     if member.id in blacklist:
-        member.kick(reason="id na blackliście")
+        await member.kick(reason="id na blackliście")
         return 0
     if time.time() - member.created_at.timestamp() < Account_YoungTime : 
         try:
@@ -758,6 +758,8 @@ async def on_member_update(before, after):
                 await check(after)
         except:
             pass
+
+
 @bot.event
 async def on_member_leave(member):
     for user in databaseClock:
@@ -767,11 +769,35 @@ async def on_member_leave(member):
         except:
             pass
     channel = discord.utils.get(bot.get_all_channels(), id=byeChannel)
-    await channel.send(f"{member} opuścił(a) nasz serwer. :sob:")
+    
+    if member.id in blacklist:
+        czyNaCzarnejLiscie="\nZnajdował się na czarnej liście ;)"
+    else:
+        czyNaCzarnejLiscie=""
+    
+    role = discord.utils.get(channel.guild.roles, id=VerificationRoleId)
+    
+    if role in member.roles:
+        czyZweryfikowany="Zweryfikowany"
+    else:
+        czyZweryfikowany="Niezweryfikowany"
+    
+    await channel.send(f"{member} (ID: `{member.id}`) (**{czyZweryfikowany}**) opuścił(a) nasz serwer. :sob:"+czyNaCzarnejLiscie)
+
+
 @bot.event
 async def on_member_remove(member):
     channel = discord.utils.get(bot.get_all_channels(), id=byeChannel)
-    await channel.send(f"{member} opuścił(a) nasz serwer. :sob:")
+    if member.id in blacklist:
+        czyNaCzarnejLiscie="\nZnajdował się na czarnej liście ;)"
+    else:
+        czyNaCzarnejLiscie=""
+    role = discord.utils.get(channel.guild.roles, id=VerificationRoleId)
+    if role in member.roles:
+        czyZweryfikowany="Zweryfikowany"
+    else:
+        czyZweryfikowany="Niezweryfikowany"
+    await channel.send(f"{member} (ID: `{member.id}`) (**{czyZweryfikowany}**) opuścił(a) nasz serwer. :sob:"+czyNaCzarnejLiscie)
     guild = member.guild
     async for entry in guild.audit_logs(limit=1, action=discord.AuditLogAction.kick):
         if entry.target == member:
@@ -1267,6 +1293,52 @@ async def reactionRole(interaction: discord.Interaction, idwiadomosci: str, emot
 @reactionRole.error
 async def errorReactionRole(interaction,x):
     await interaction.response.send_message("Brak uprawnień.")
+
+@tree.command(name = "czarna-lista", description = "Dodaj/usuń kogoś do/z czarnej listy.", guild=discord.Object(id=ServerID)) 
+@discord.app_commands.checks.has_role(AdminRoleID)
+@discord.app_commands.choices(akcja=[
+        discord.app_commands.Choice(name="Dodaj do", value="add"),
+        discord.app_commands.Choice(name="Usuń z", value="delete"),
+        discord.app_commands.Choice(name="Sprawdź", value="check")
+        ])
+async def blacklistFunction(interaction: discord.Interaction, akcja: discord.app_commands.Choice[str], id_konta: str):
+    if akcja.value=="add":
+        try:
+            blacklist.append(int(id_konta))
+        except:
+            await interaction.response.send_message(f'Niepoprawne id konta!')
+            return 0
+        plik = open("blacklist.json","w+")
+        plik.write(json.dumps(blacklist))
+        plik.close()
+        await interaction.response.send_message(f'Dodano na czarną listę konto o id `{id_konta}`.')
+
+
+    if akcja.value=="delete":
+        try:
+            blacklist.remove(int(id_konta))
+        except ValueError:
+            await interaction.response.send_message(f'Konto nie jest na czarnej liście!')
+            return 0
+        plik = open("blacklist.json", "w+")
+        plik.write(json.dumps(blacklist))
+        plik.close()
+        await interaction.response.send_message(f'Usunięto z czarnej listy konto o id `{id_konta}`.')
+
+    if akcja.value=="check":
+        try:
+            if int(id_konta) in blacklist:
+                await interaction.response.send_message("```Znaleziono konto na blackliście!```")
+            else:
+                await interaction.response.send_message("Nie znaleziono :)")
+        except ValueError:
+            await interaction.response.send_message("Niepoprane id konta!")
+
+@blacklistFunction.error
+async def errorBlacklistFunction(interaction,x):
+    await interaction.response.send_message("Brak uprawnień.")
+
+
 def backup():
     dzisiejszadata=datetime.datetime.today().date()
     timez=datetime.datetime.now().time()
