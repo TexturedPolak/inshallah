@@ -69,6 +69,7 @@ welcomeChannel=config.get("welcomeChannel")
 byeChannel=config.get("byeChannel")
 BackupFolderGDID = config.get("BackupFolderGDID")
 MemesChannel=config.get("MemesChannel")
+RolesForLevel=config.get("RolesForLevel")
 embedPlus=""
 mydb = psycopg2.connect(
   database=databaseName,  
@@ -147,6 +148,81 @@ plik.close()
 plik = open("blacklist.json","r")
 blacklist = json.loads(plik.read())
 plik.close()
+async def roleForLevel(userID, level):
+    guild = bot.get_guild(ServerID)
+    member = guild.get_member(int(userID))
+    roles = member.roles
+    if level == 0: 
+        role = guild.get_role(RolesForLevel[0])
+        if role not in roles:
+            await member.add_roles(role)
+    elif 0 < level < 10:
+        pastRole = guild.get_role(RolesForLevel[0])
+        role = guild.get_role(RolesForLevel[1])
+        if pastRole in roles:
+            await member.remove_roles(pastRole)
+        if role not in roles:
+            await member.add_roles(role)
+    elif 10 <= level < 20:
+        pastpastRole = guild.get_role(RolesForLevel[0])
+        pastRole = guild.get_role(RolesForLevel[1])
+        role = guild.get_role(RolesForLevel[2])
+        if pastpastRole in roles:
+            await member.remove_roles(pastpastRole)
+        elif pastRole in roles:
+            await member.remove_roles(pastRole)
+        if role not in roles:
+            await member.add_roles(role)
+    elif 20 <= level < 30:
+        pastpastpastRole = guild.get_role(RolesForLevel[0])
+        pastpastRole = guild.get_role(RolesForLevel[1])
+        pastRole = guild.get_role(RolesForLevel[2])
+        role = guild.get_role(RolesForLevel[3])
+        if pastpastpastRole in roles:
+            await member.remove_roles(pastpastpastRole)
+        elif pastpastRole in roles:
+            await member.remove_roles(pastpastRole)
+        elif pastRole in roles:
+            await member.remove_roles(pastRole)
+        if role not in roles:
+            await member.add_roles(role)
+    elif 30 <= level < 40:
+        pastpastpastpastRole = guild.get_role(RolesForLevel[0])
+        pastpastpastRole = guild.get_role(RolesForLevel[1])
+        pastpastRole = guild.get_role(RolesForLevel[2])
+        pastRole = guild.get_role(RolesForLevel[3])
+        role = guild.get_role(RolesForLevel[4])
+        if pastpastpastpastRole in roles:
+            await member.remove_roles(pastpastpastpastRole)
+        elif pastpastpastRole in roles:
+            await member.remove_roles(pastpastpastRole)
+        elif pastpastRole in roles:
+            await member.remove_roles(pastpastRole)
+        elif pastRole in roles:
+            await member.remove_roles(pastRole)
+        if role not in roles:
+            await member.add_roles(role)
+    elif 40 <= level:
+        pastpastpastpastpastRole = guild.get_role(RolesForLevel[0])
+        pastpastpastpastRole = guild.get_role(RolesForLevel[1])
+        pastpastpastRole = guild.get_role(RolesForLevel[2])
+        pastpastRole = guild.get_role(RolesForLevel[3])
+        pastRole = guild.get_role(RolesForLevel[4])
+        role = guild.get_role(RolesForLevel[5])
+        if pastpastpastpastpastRole in roles:
+            await member.remove_roles(pastpastpastpastpastRole)
+        elif pastpastpastpastRole in roles:
+            await member.remove_roles(pastpastpastpastRole)
+        elif pastpastpastRole in roles:
+            await member.remove_roles(pastpastpastRole)
+        elif pastpastRole in roles:
+            await member.remove_roles(pastpastRole)
+        elif pastRole in roles:
+            await member.remove_roles(pastRole)
+        elif pastRole in roles:
+            await member.remove_roles(pastRole)
+        if role not in roles:
+            await member.add_roles(role)
 def leveleNapraw():
     sql= "SELECT * FROM levele"
     mycursor.execute(sql)
@@ -172,6 +248,7 @@ async def dajLevele(userID, beforeLevel):
         user = bot.get_user(int(userID))
         embed = discord.Embed(colour=discord.Colour.green(),title=f"{user.display_name} zdobył(a) {level} poziom! Gratulujemy :grin:")
         await channel.send(embed=embed)
+    await roleForLevel(userID, level)
 async def dodajXP(ilosc,userID):
     global mycursor
     global mydb
