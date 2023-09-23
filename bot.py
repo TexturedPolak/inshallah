@@ -152,75 +152,94 @@ async def roleForLevel(userID, level):
     guild = bot.get_guild(ServerID)
     member = guild.get_member(int(userID))
     roles = member.roles
-    if level == 0: 
+    if 0 <= level < 3: 
         role = guild.get_role(RolesForLevel[0])
         if role not in roles:
             await member.add_roles(role)
-    elif 0 < level < 10:
-        pastRole = guild.get_role(RolesForLevel[0])
+    elif 3 <= level < 10:
         role = guild.get_role(RolesForLevel[1])
-        if pastRole in roles:
-            await member.remove_roles(pastRole)
+        if guild.get_role(RolesForLevel[0]) in roles:
+            await member.remove_roles(guild.get_role(RolesForLevel[0]))
         if role not in roles:
             await member.add_roles(role)
     elif 10 <= level < 20:
-        pastpastRole = guild.get_role(RolesForLevel[0])
-        pastRole = guild.get_role(RolesForLevel[1])
+        pastRoles = [guild.get_role(RolesForLevel[0]), guild.get_role(RolesForLevel[1])]
         role = guild.get_role(RolesForLevel[2])
-        if pastpastRole in roles:
-            await member.remove_roles(pastpastRole)
-        elif pastRole in roles:
-            await member.remove_roles(pastRole)
+        for pastRole in pastRoles:
+            if pastRole in roles:
+                await member.remove_roles(pastRole)
         if role not in roles:
             await member.add_roles(role)
     elif 20 <= level < 30:
-        pastpastpastRole = guild.get_role(RolesForLevel[0])
-        pastpastRole = guild.get_role(RolesForLevel[1])
-        pastRole = guild.get_role(RolesForLevel[2])
+        pastRoles = [guild.get_role(RolesForLevel[0]),guild.get_role(RolesForLevel[1]),guild.get_role(RolesForLevel[2])]
         role = guild.get_role(RolesForLevel[3])
-        if pastpastpastRole in roles:
-            await member.remove_roles(pastpastpastRole)
-        elif pastpastRole in roles:
-            await member.remove_roles(pastpastRole)
-        elif pastRole in roles:
-            await member.remove_roles(pastRole)
+        for pastRole in pastRoles:
+            if pastRole in roles:
+                await member.remove_roles(pastRole)
         if role not in roles:
             await member.add_roles(role)
     elif 30 <= level < 40:
-        pastpastpastpastRole = guild.get_role(RolesForLevel[0])
-        pastpastpastRole = guild.get_role(RolesForLevel[1])
-        pastpastRole = guild.get_role(RolesForLevel[2])
-        pastRole = guild.get_role(RolesForLevel[3])
+        pastRoles = pastRoles = [guild.get_role(RolesForLevel[0]),guild.get_role(RolesForLevel[1]),guild.get_role(RolesForLevel[2]),guild.get_role(RolesForLevel[3])]
         role = guild.get_role(RolesForLevel[4])
-        if pastpastpastpastRole in roles:
-            await member.remove_roles(pastpastpastpastRole)
-        elif pastpastpastRole in roles:
-            await member.remove_roles(pastpastpastRole)
-        elif pastpastRole in roles:
-            await member.remove_roles(pastpastRole)
-        elif pastRole in roles:
-            await member.remove_roles(pastRole)
+        for pastRole in pastRoles:
+            if pastRole in roles:
+                await member.remove_roles(pastRole)
         if role not in roles:
             await member.add_roles(role)
-    elif 40 <= level:
-        pastpastpastpastpastRole = guild.get_role(RolesForLevel[0])
-        pastpastpastpastRole = guild.get_role(RolesForLevel[1])
-        pastpastpastRole = guild.get_role(RolesForLevel[2])
-        pastpastRole = guild.get_role(RolesForLevel[3])
-        pastRole = guild.get_role(RolesForLevel[4])
+    elif 40 <= level < 50:
+        pastRoles = pastRoles = [guild.get_role(RolesForLevel[0]),guild.get_role(RolesForLevel[1]),guild.get_role(RolesForLevel[2]),guild.get_role(RolesForLevel[3]),guild.get_role(RolesForLevel[4])]
         role = guild.get_role(RolesForLevel[5])
-        if pastpastpastpastpastRole in roles:
-            await member.remove_roles(pastpastpastpastpastRole)
-        elif pastpastpastpastRole in roles:
-            await member.remove_roles(pastpastpastpastRole)
-        elif pastpastpastRole in roles:
-            await member.remove_roles(pastpastpastRole)
-        elif pastpastRole in roles:
-            await member.remove_roles(pastpastRole)
-        elif pastRole in roles:
-            await member.remove_roles(pastRole)
-        elif pastRole in roles:
-            await member.remove_roles(pastRole)
+        for pastRole in pastRoles:
+            if pastRole in roles:
+                await member.remove_roles(pastRole)
+        if role not in roles:
+            await member.add_roles(role)
+    elif 50 <= level < 60:
+        pastRoles = pastRoles = [guild.get_role(RolesForLevel[0]),guild.get_role(RolesForLevel[1]),guild.get_role(RolesForLevel[2]),guild.get_role(RolesForLevel[3]),guild.get_role(RolesForLevel[4]),guild.get_role(RolesForLevel[5])]
+        role = guild.get_role(RolesForLevel[6])
+        for pastRole in pastRoles:
+            if pastRole in roles:
+                await member.remove_roles(pastRole)
+        if role not in roles:
+            await member.add_roles(role)
+    elif 60 <= level < 70:
+        pastRoles = pastRoles = [guild.get_role(RolesForLevel[0]),guild.get_role(RolesForLevel[1]),guild.get_role(RolesForLevel[2]),guild.get_role(RolesForLevel[3]),guild.get_role(RolesForLevel[4]),guild.get_role(RolesForLevel[5]),guild.get_role(RolesForLevel[6])]
+        role = guild.get_role(RolesForLevel[7])
+        for pastRole in pastRoles:
+            if pastRole in roles:
+                await member.remove_roles(pastRole)
+        if role not in roles:
+            await member.add_roles(role)
+    elif 70 <= level < 80:
+        pastRoles = pastRoles = [guild.get_role(RolesForLevel[0]),guild.get_role(RolesForLevel[1]),guild.get_role(RolesForLevel[2]),guild.get_role(RolesForLevel[3]),guild.get_role(RolesForLevel[4]),guild.get_role(RolesForLevel[5]),guild.get_role(RolesForLevel[6]),guild.get_role(RolesForLevel[7])]
+        role = guild.get_role(RolesForLevel[8])
+        for pastRole in pastRoles:
+            if pastRole in roles:
+                await member.remove_roles(pastRole)
+        if role not in roles:
+            await member.add_roles(role)
+    elif 80 <= level < 90:
+        pastRoles = pastRoles = [guild.get_role(RolesForLevel[0]),guild.get_role(RolesForLevel[1]),guild.get_role(RolesForLevel[2]),guild.get_role(RolesForLevel[3]),guild.get_role(RolesForLevel[4]),guild.get_role(RolesForLevel[5]),guild.get_role(RolesForLevel[6]),guild.get_role(RolesForLevel[7]),guild.get_role(RolesForLevel[8])]
+        role = guild.get_role(RolesForLevel[9])
+        for pastRole in pastRoles:
+            if pastRole in roles:
+                await member.remove_roles(pastRole)
+        if role not in roles:
+            await member.add_roles(role)
+    elif 90 <= level < 100:
+        pastRoles = pastRoles = [guild.get_role(RolesForLevel[0]),guild.get_role(RolesForLevel[1]),guild.get_role(RolesForLevel[2]),guild.get_role(RolesForLevel[3]),guild.get_role(RolesForLevel[4]),guild.get_role(RolesForLevel[5]),guild.get_role(RolesForLevel[6]),guild.get_role(RolesForLevel[7]),guild.get_role(RolesForLevel[8]),guild.get_role(RolesForLevel[9])]
+        role = guild.get_role(RolesForLevel[10])
+        for pastRole in pastRoles:
+            if pastRole in roles:
+                await member.remove_roles(pastRole)
+        if role not in roles:
+            await member.add_roles(role)
+    elif 100 <= level:
+        pastRoles = pastRoles = [guild.get_role(RolesForLevel[0]),guild.get_role(RolesForLevel[1]),guild.get_role(RolesForLevel[2]),guild.get_role(RolesForLevel[3]),guild.get_role(RolesForLevel[4]),guild.get_role(RolesForLevel[5]),guild.get_role(RolesForLevel[6]),guild.get_role(RolesForLevel[7]),guild.get_role(RolesForLevel[8]),guild.get_role(RolesForLevel[9]),guild.get_role(RolesForLevel[10])]
+        role = guild.get_role(RolesForLevel[11])
+        for pastRole in pastRoles:
+            if pastRole in roles:
+                await member.remove_roles(pastRole)
         if role not in roles:
             await member.add_roles(role)
 def leveleNapraw():
