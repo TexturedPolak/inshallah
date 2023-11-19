@@ -151,7 +151,11 @@ plik.close()
 async def roleForLevel(userID, level):
     guild = bot.get_guild(ServerID)
     member = guild.get_member(int(userID))
-    roles = member.roles
+    try:
+        roles = member.roles
+    except:
+        print(f"Pominięto. Użytkownik o id {userID} wyszedł (dawno temu) z serwera .")
+        return 0
     if 0 <= level < 3: 
         role = guild.get_role(RolesForLevel[0])
         if role not in roles:
@@ -242,7 +246,7 @@ async def roleForLevel(userID, level):
                 await member.remove_roles(pastRole)
         if role not in roles:
             await member.add_roles(role)
-def leveleNapraw():
+async def leveleNapraw():
     sql= "SELECT * FROM levele"
     mycursor.execute(sql)
     results = mycursor.fetchall()
@@ -252,6 +256,7 @@ def leveleNapraw():
         val=[level,result[0]]
         mycursor.execute(sql,val)
         mydb.commit()
+        await roleForLevel(result[0], level)
 async def dajLevele(userID, beforeLevel):
     sql= "SELECT xp FROM levele WHERE discordid=%s"
     val =[(userID)]
@@ -267,7 +272,9 @@ async def dajLevele(userID, beforeLevel):
         user = bot.get_user(int(userID))
         embed = discord.Embed(colour=discord.Colour.green(),title=f"{user.display_name} zdobył(a) {level} poziom! Gratulujemy :grin:")
         await channel.send(embed=embed)
-    await roleForLevel(userID, level)
+        await roleForLevel(userID, level)
+    if level==0:
+        await roleForLevel(userID, level)
 async def dodajXP(ilosc,userID):
     global mycursor
     global mydb
@@ -508,6 +515,7 @@ async def checkMessage(message):
 @bot.event
 async def on_ready():
     await tree.sync(guild=discord.Object(id=ServerID))
+    #await leveleNapraw()
     await bot.change_presence(status=discord.Status.online, activity=discord.Game('Miłego dnia :)'))
     print("I'm ready!")
     await resetPoints()
@@ -776,18 +784,22 @@ async def on_member_join(member):
         await channel.send(embed=embed)
         await channel.send(file=discord.File(titleCaptcha))
         os.remove(titleCaptcha)
-        message = await bot.wait_for("message")
-        input = message.content
-        if input==str(wynik):
-            logiWeryfikacja+="**Pytanie 2**\nRównanie: "+str(liczba1)+"+"+str(liczba2)+"\nOdpowiedź: `"+input+"`\nOdpowiedziano poprawnie. \n\n"
-            await channel.purge(limit=1000)
-            await pytanieTrzy()
-        else:
-            logiWeryfikacja+="**Pytanie 2**\nRównanie: "+str(liczba1)+"+"+str(liczba2)+"\nOdpowiedź: `"+input+"`\nOdpowiedziano niepoprawnie.\n\n"
-            embed = discord.Embed(colour=discord.Colour.blue(),title=f"Niepoprawna odpowiedź, spróbuj ponownie!",description="Pamiętaj aby zapisać wynik liczbowo np. `12` !")
-            await channel.send(embed=embed)
-            await pytanieDwa(usun)
-            
+        async def waitingForMessage():
+            nonlocal logiWeryfikacja
+            message = await bot.wait_for("message")
+            input = message.content
+            if message.content==str(wynik) and message.channel.id == channel.id:
+                logiWeryfikacja+="**Pytanie 2**\nRównanie: "+str(liczba1)+"*"+str(liczba2)+"\nOdpowiedź: `"+input+"`\nOdpowiedziano poprawnie. \n\n"
+                await channel.purge(limit=1000)
+                await pytanieTrzy()
+            elif message.content!=str(wynik) and message.channel.id == channel.id:
+                logiWeryfikacja+="**Pytanie 2**\nRównanie: "+str(liczba1)+"*"+str(liczba2)+"\nOdpowiedź: `"+input+"`\nOdpowiedziano niepoprawnie.\n\n"
+                embed = discord.Embed(colour=discord.Colour.blue(),title=f"Niepoprawna odpowiedź, spróbuj ponownie!",description="Pamiętaj aby zapisać wynik liczbowo np. `12` !")
+                await channel.send(embed=embed)
+                await pytanieDwa(usun)
+            else:
+                await waitingForMessage()
+        await waitingForMessage()
     # Pytanie 1
     async def pytanieJedenOdp(good):
         nonlocal stopZegar
@@ -1272,6 +1284,8 @@ async def ranking(interaction: discord.Interaction):
     licznik=1
     for result in myresults:
         user = bot.get_user(int(result[0]))
+        if user is None:
+            user = "Dawny bywalec :("
         embed.add_field(name=f"**{licznik}. {user}**", value=f"Punkty doświadczenia: {result[1]}\nPoziom: {result[2]}",inline=False)
         licznik+=1
     await interaction.response.send_message(embed=embed)
