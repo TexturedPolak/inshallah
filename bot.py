@@ -70,6 +70,8 @@ byeChannel=config.get("byeChannel")
 BackupFolderGDID = config.get("BackupFolderGDID")
 MemesChannel=config.get("MemesChannel")
 RolesForLevel=config.get("RolesForLevel")
+listOfWelcomes=config.get("listOfWelcomes")
+WelcomeMessages=config.get("WelcomeMessages")
 embedPlus=""
 mydb = psycopg2.connect(
   database=databaseName,  
@@ -79,6 +81,7 @@ mydb = psycopg2.connect(
   password=databasePassword
 )
 mycursor = mydb.cursor()
+
 
 def checkFiles():
     emplyList = []
@@ -1014,6 +1017,7 @@ async def on_message(message):
     global bumpTime
     await dodajXP(int(len(message.content)/5),str(message.author.id))
     wiad = message.content
+    sendedWelcome=False
     for i in ["dzięki","dzieki","dzienki","thx","dziękuję","dziekuje","dziękuje"]:
         if i in wiad.lower():
             await dodajXP(10,str(message.author.id))
@@ -1021,17 +1025,12 @@ async def on_message(message):
         if message.author.id == i.get("userId"):
                 i["timeToKick"] = Account_IdleTime
     if message.author.bot == False:
-        if "siema" in wiad.lower():
-            await message.channel.send("No siema :grinning:", reference=message)
-        elif "hej" in wiad.lower():
-            await message.channel.send("No hej :grinning:", reference=message)
-        elif "hejka" in wiad.lower():
-            await message.channel.send("No hejka :grinning:", reference=message)
-        elif "witam" in wiad.lower():
-            await message.channel.send("Witam, witam :grinning:", reference=message)
-        elif "cześć" in wiad.lower():
-            await message.channel.send("Cześć, cześć :grinning:", reference=message)
-        elif "Привет" in wiad.lower():
+        for welcome in listOfWelcomes:
+            for mess in wiad.split(" "):
+                if welcome in mess.lower() and sendedWelcome is False:
+                    await message.channel.send(WelcomeMessages[random.randint(0,len(WelcomeMessages))], reference=message)
+                    sendedWelcome=True
+        if "привет" in wiad.lower():
             await message.channel.send("Ja nie gawarisz po ruski :(",reference=message)
     if DoAutomodMessages:
         await checkMessage(message)
@@ -1449,6 +1448,35 @@ async def errorBlacklistFunction(interaction,x):
     await interaction.response.send_message("Brak uprawnień.")
 
 
+@tree.command(name = "dodaj-powitanie", description = "Dodaje powitanie do wysłania przez bota", guild=discord.Object(id=ServerID)) 
+@discord.app_commands.checks.has_role(AdminRoleID)
+
+async def dodajPowitanie(interaction: discord.Interaction, wiadomosc: str):
+    pass
+    WelcomeMessages.append(wiadomosc)
+    config["WelcomeMessages"]=WelcomeMessages
+    file = open("config.json","w")
+    file.write(json.dumps(config))
+    file.close()
+    await interaction.response.send_message(f'Dodano "{wiadomosc}" do wiadomości które będą wysyłane przez bota, jeśli wykryje przywitanie.')
+@dodajPowitanie.error
+async def dodajPowitanieError(interaction,x):
+    await interaction.response.send_message("Brak uprawnień.")
+
+@tree.command(name = "dodaj-powitanie-do-wykrywania", description = "Dodaje powitanie wykrywane przez bota", guild=discord.Object(id=ServerID)) 
+@discord.app_commands.checks.has_role(AdminRoleID)
+
+async def dodajPowitanieDoWykrywania(interaction: discord.Interaction, powitanie: str):
+    pass
+    listOfWelcomes.append(powitanie.lower())
+    config["listOfWelcomes"]=listOfWelcomes
+    file = open("config.json","w")
+    file.write(json.dumps(config))
+    file.close()
+    await interaction.response.send_message(f'Dodano "{powitanie}" do wiadomości które będą wykrywane przez bota jako przywitanie.')
+@dodajPowitanieDoWykrywania.error
+async def dodajPowitanieDoWykrywaniaError(interaction,x):
+    await interaction.response.send_message("Brak uprawnień.")
 def backup():
     dzisiejszadata=datetime.datetime.today().date()
     timez=datetime.datetime.now().time()
