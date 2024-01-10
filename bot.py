@@ -359,32 +359,32 @@ async def resetPoints():
                 plik.close()
         save()
         await asyncio.sleep(1)
-        for user in databaseClock:
-            if user.get("timeToKick")<=0:
-                czy_isnieje=False
-                for i in database:
-                    if i.get("name")==user.get("userId"):
-                        i["points"]=PointsLimit
-                        czy_isnieje=True
-                if czy_isnieje==False:
-                    database.append({"name":user.get("userId"),"points":PointsLimit})
-                save()
+        #for user in databaseClock:
+            #if user.get("timeToKick")<=0:
+                #czy_isnieje=False
+                #for i in database:
+                    #if i.get("name")==user.get("userId"):
+                        #i["points"]=PointsLimit
+                        #czy_isnieje=True
+                #if czy_isnieje==False:
+                    #database.append({"name":user.get("userId"),"points":PointsLimit})
+                #save()
                 
-                guildDoClock = bot.get_guild(ServerID)
-                member = guildDoClock.get_member(user.get("userId"))
-                try:
-                    await member.send("Zostałeś wyrzucony za bardzo małą aktywność na serwerze.")                   
-                except:
-                    pass
-                try:    
-                    await check(member) 
-                except:
-                    pass
+                #guildDoClock = bot.get_guild(ServerID)
+                #member = guildDoClock.get_member(user.get("userId"))
+                #try:
+                    #await member.send("Zostałeś wyrzucony za bardzo małą aktywność na serwerze.")                   
+                #except:
+                    #pass
+                #try:    
+                    #await check(member) 
+                #except:
+                    #pass
 
 
-                databaseClock.remove({"userId":user.get("userId"),"timeToKick":user.get("timeToKick")})
-            else:   
-                user["timeToKick"]-=1
+                #databaseClock.remove({"userId":user.get("userId"),"timeToKick":user.get("timeToKick")})
+            #else:   
+                #user["timeToKick"]-=1
         plik = open("databaseClock.json","w+")
         plik.write(json.dumps(databaseClock))
         plik.close()
